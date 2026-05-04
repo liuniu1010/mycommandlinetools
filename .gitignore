@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+credential
+.upwork-token.json
+tools/upwork/.token.json
+node_modules/
+npm-debug.log*

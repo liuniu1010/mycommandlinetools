@@ -1,0 +1,22 @@
+{
+  "name": "personal-toolset",
+  "version": "1.0.0",
+  "description": "Personal command-line toolset.",
+  "main": "tools/upwork/cli.js",
+  "bin": {
+    "upwork-cli": "./tools/upwork/cli.js"
+  },
+  "scripts": {
+    "upwork:auth": "node tools/upwork/cli.js auth",
+    "upwork:search": "node tools/upwork/cli.js search",
+    "verify": "node --check tools/upwork/cli.js",
+    "test": "npm run verify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "upwork-api": "^1.3.8"
+  }
+}
