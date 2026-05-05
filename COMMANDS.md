@@ -64,6 +64,12 @@ Authenticate with Gmail:
 npm run gmail:auth
 ```
 
+List Gmail labels:
+
+```bash
+npm run gmail:labels
+```
+
 List messages:
 
 ```bash
@@ -74,6 +80,18 @@ Read one message:
 
 ```bash
 node tools/gmail/cli.js read <messageId>
+```
+
+List attachments on one message:
+
+```bash
+node tools/gmail/cli.js attachments <messageId>
+```
+
+Download attachments from one message:
+
+```bash
+node tools/gmail/cli.js download-attachments <messageId> --out downloads/gmail
 ```
 
 Send a plain-text message:

@@ -18,8 +18,11 @@ Create the OAuth client in Google Cloud Console as a web application and add the
 
 ```bash
 npm run gmail:auth
+npm run gmail:labels
 npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
 node tools/gmail/cli.js read <messageId>
+node tools/gmail/cli.js attachments <messageId>
+node tools/gmail/cli.js download-attachments <messageId> --out downloads/gmail
 node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
 ```
 

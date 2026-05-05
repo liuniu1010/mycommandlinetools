@@ -9,6 +9,7 @@ tools/upwork/.token.json
 tools/gmail/.token.json
 node_modules/
 dist/
+downloads/
 npm-debug.log*
 .codex/
 .claude/

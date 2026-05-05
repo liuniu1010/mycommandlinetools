@@ -234,6 +234,108 @@ async function list(args) {
   }
 }
 
+async function labels() {
+  const data = await gmail("/users/me/labels");
+  const items = data.labels || [];
+  console.log(`Found ${items.length} label(s).\n`);
+  items
+    .sort((left, right) => {
+      const leftType = left.type || "";
+      const rightType = right.type || "";
+      if (leftType !== rightType) return leftType.localeCompare(rightType);
+      return (left.name || "").localeCompare(right.name || "");
+    })
+    .forEach((label) => {
+      console.log(`${label.id}`);
+      console.log(`  name: ${label.name || ""}`);
+      console.log(`  type: ${label.type || ""}`);
+      console.log("");
+    });
+}
+
+function collectAttachments(part, attachments = []) {
+  if (!part) return attachments;
+  const filename = part.filename || "";
+  const attachmentId = part.body?.attachmentId;
+  if (filename && attachmentId) {
+    attachments.push({
+      partId: part.partId || "",
+      filename,
+      mimeType: part.mimeType || "",
+      size: part.body?.size || 0,
+      attachmentId,
+    });
+  }
+  for (const child of part.parts || []) collectAttachments(child, attachments);
+  return attachments;
+}
+
+async function getMessageAttachments(messageId) {
+  const message = await gmail(`/users/me/messages/${encodeURIComponent(messageId)}?format=full`);
+  return collectAttachments(message.payload);
+}
+
+function safeFilename(filename) {
+  const cleaned = filename.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_").trim();
+  return cleaned || "attachment";
+}
+
+function uniquePath(directory, filename) {
+  const parsed = path.parse(filename);
+  let candidate = path.join(directory, filename);
+  let index = 1;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(directory, `${parsed.name}-${index}${parsed.ext}`);
+    index += 1;
+  }
+  return candidate;
+}
+
+function decodeBase64Url(data) {
+  return Buffer.from(data.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+}
+
+async function attachments(args) {
+  const messageId = args[0];
+  if (!messageId) throw new Error("Usage: node tools/gmail/cli.js attachments <messageId>");
+
+  const items = await getMessageAttachments(messageId);
+  console.log(`Found ${items.length} attachment(s).\n`);
+  items.forEach((item, index) => {
+    console.log(`${index + 1}. ${item.filename}`);
+    console.log(`   mime: ${item.mimeType}`);
+    console.log(`   size: ${item.size} bytes`);
+    console.log(`   attachmentId: ${item.attachmentId}`);
+    console.log(`   partId: ${item.partId}`);
+    console.log("");
+  });
+}
+
+async function downloadAttachments(args) {
+  const messageId = args[0];
+  if (!messageId) {
+    throw new Error("Usage: node tools/gmail/cli.js download-attachments <messageId> [--out downloads/gmail]");
+  }
+
+  const options = parseOptions(args.slice(1));
+  const outputDir = path.resolve(ROOT, options.out || "downloads/gmail", messageId);
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const items = await getMessageAttachments(messageId);
+  console.log(`Found ${items.length} attachment(s).`);
+  if (items.length === 0) return;
+
+  for (const item of items) {
+    const data = await gmail(
+      `/users/me/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(item.attachmentId)}`
+    );
+    const filename = safeFilename(item.filename);
+    const target = uniquePath(outputDir, filename);
+    fs.writeFileSync(target, decodeBase64Url(data.data || ""));
+    console.log(`Saved ${path.relative(ROOT, target)}`);
+  }
+}
+
 async function read(args) {
   const id = args[0];
   if (!id) throw new Error("Usage: node tools/gmail/cli.js read <messageId>");
@@ -286,13 +388,19 @@ function help() {
   console.log(`
 Usage:
   npm run gmail:auth
+  npm run gmail:labels
   npm run gmail:list -- [--query "from:client@example.com"] [--limit 10] [--label INBOX]
   node tools/gmail/cli.js read <messageId>
+  node tools/gmail/cli.js attachments <messageId>
+  node tools/gmail/cli.js download-attachments <messageId> [--out downloads/gmail]
   node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message"
 
 Examples:
   npm run gmail:auth
+  npm run gmail:labels
   npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
+  node tools/gmail/cli.js attachments 18c123abc
+  node tools/gmail/cli.js download-attachments 18c123abc --out downloads/gmail
   node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
 `);
 }
@@ -304,8 +412,11 @@ async function main() {
     return;
   }
   if (command === "auth") return auth();
+  if (command === "labels") return labels();
   if (command === "list") return list(args);
   if (command === "read") return read(args);
+  if (command === "attachments") return attachments(args);
+  if (command === "download-attachments") return downloadAttachments(args);
   if (command === "send") return send(args);
   throw new Error(`Unknown command: ${command}`);
 }
