@@ -1,6 +1,6 @@
 .env
 .env.*
-AGENT.md
+AGENTS.md
 CLAUDE.md
 !.env.example
 credential
