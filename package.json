@@ -12,7 +12,10 @@
     "gmail:list": "node tools/gmail/cli.js list",
     "upwork:auth": "node tools/upwork/cli.js auth",
     "upwork:search": "node tools/upwork/cli.js search",
-    "verify": "node --check tools/upwork/cli.js && node --check tools/gmail/cli.js",
+    "type-check": "node scripts/type-check.js",
+    "lint": "node scripts/lint.js",
+    "build": "node scripts/build.js",
+    "verify": "npm run type-check && npm run lint && npm run build",
     "test": "npm run verify"
   },
   "keywords": [],

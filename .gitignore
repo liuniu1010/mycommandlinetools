@@ -1,11 +1,14 @@
 .env
 .env.*
+AGENT.md
+CLAUDE.md
 !.env.example
 credential
 .upwork-token.json
 tools/upwork/.token.json
 tools/gmail/.token.json
 node_modules/
+dist/
 npm-debug.log*
 .codex/
 .claude/

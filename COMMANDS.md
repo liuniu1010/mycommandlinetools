@@ -23,10 +23,18 @@ UPWORK_CALLBACK_URL=http://localhost:3000/callback
 
 ## Verification
 
-Check source syntax:
+Run the full verification pipeline before commits:
 
 ```bash
 npm run verify
+```
+
+This runs syntax checks, lint checks, and a build:
+
+```bash
+npm run type-check
+npm run lint
+npm run build
 ```
 
 Equivalent test command:
