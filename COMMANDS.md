@@ -35,6 +35,45 @@ Equivalent test command:
 npm test
 ```
 
+## Gmail
+
+Implementation:
+
+```text
+tools/gmail/cli.js
+```
+
+Tool notes:
+
+- Requires a Google Cloud OAuth client with Gmail API access enabled.
+- Uses the root `.env` file.
+- Saves OAuth tokens locally to `tools/gmail/.token.json`.
+- Uses read-only and send scopes by default.
+
+Authenticate with Gmail:
+
+```bash
+npm run gmail:auth
+```
+
+List messages:
+
+```bash
+npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
+```
+
+Read one message:
+
+```bash
+node tools/gmail/cli.js read <messageId>
+```
+
+Send a plain-text message:
+
+```bash
+node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
+```
+
 ## Upwork
 
 Implementation:
@@ -92,4 +131,3 @@ Show Upwork CLI help:
 ```bash
 node tools/upwork/cli.js help
 ```
-

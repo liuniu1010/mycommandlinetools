@@ -4,12 +4,15 @@
   "description": "Personal command-line toolset.",
   "main": "tools/upwork/cli.js",
   "bin": {
-    "upwork-cli": "./tools/upwork/cli.js"
+    "upwork-cli": "./tools/upwork/cli.js",
+    "gmail-cli": "./tools/gmail/cli.js"
   },
   "scripts": {
+    "gmail:auth": "node tools/gmail/cli.js auth",
+    "gmail:list": "node tools/gmail/cli.js list",
     "upwork:auth": "node tools/upwork/cli.js auth",
     "upwork:search": "node tools/upwork/cli.js search",
-    "verify": "node --check tools/upwork/cli.js",
+    "verify": "node --check tools/upwork/cli.js && node --check tools/gmail/cli.js",
     "test": "npm run verify"
   },
   "keywords": [],

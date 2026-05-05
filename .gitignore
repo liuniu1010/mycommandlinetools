@@ -4,6 +4,7 @@
 credential
 .upwork-token.json
 tools/upwork/.token.json
+tools/gmail/.token.json
 node_modules/
 npm-debug.log*
 .codex/
