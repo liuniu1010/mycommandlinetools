@@ -7,6 +7,7 @@ credential
 .upwork-token.json
 tools/upwork/.token.json
 tools/gmail/.token.json
+tools/gcalendar/.token.json
 node_modules/
 dist/
 downloads/

@@ -43,6 +43,57 @@ Equivalent test command:
 npm test
 ```
 
+## Google Calendar
+
+Implementation:
+
+```text
+tools/gcalendar/cli.js
+```
+
+Tool notes:
+
+- Requires a Google Cloud OAuth client with Google Calendar API enabled.
+- Uses the root `.env` file.
+- Saves OAuth tokens locally to `tools/gcalendar/.token.json`.
+- Uses the Calendar scope so it can read calendars and create/update events.
+
+Authenticate with Google Calendar:
+
+```bash
+npm run gcalendar:auth
+```
+
+List calendars:
+
+```bash
+npm run gcalendar:calendars
+```
+
+List upcoming events:
+
+```bash
+npm run gcalendar:events -- --calendar primary --limit 10
+```
+
+Create an event:
+
+```bash
+node tools/gcalendar/cli.js add-event --summary "Test" --start 2026-05-05T10:00:00+12:00 --end 2026-05-05T10:30:00+12:00
+```
+
+Update an event:
+
+```bash
+node tools/gcalendar/cli.js update-event <eventId> --summary "Updated title"
+```
+
+Delete an event:
+
+```bash
+node tools/gcalendar/cli.js delete-event <eventId>
+```
+
 ## Gmail
 
 Implementation:

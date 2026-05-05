@@ -5,9 +5,12 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
+const TOOLS_DIR = path.join(ROOT, "tools");
 const CHECKED_FILES = [
-  "tools/gmail/cli.js",
-  "tools/upwork/cli.js",
+  ...fs
+    .readdirSync(TOOLS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => `tools/${entry.name}/cli.js`),
   "scripts/build.js",
   "scripts/lint.js",
   "scripts/type-check.js",
