@@ -295,6 +295,84 @@ function decodeBase64Url(data) {
   return Buffer.from(data.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 }
 
+function valuesForOption(options, key) {
+  const value = options[key];
+  if (value == null) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function mimeTypeForFile(file) {
+  const ext = path.extname(file).toLowerCase();
+  const types = {
+    ".csv": "text/csv",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".gif": "image/gif",
+    ".htm": "text/html",
+    ".html": "text/html",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".json": "application/json",
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".txt": "text/plain",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".zip": "application/zip",
+  };
+  return types[ext] || "application/octet-stream";
+}
+
+function encodeHeader(value) {
+  return String(value || "").replace(/\r?\n/g, " ").trim();
+}
+
+function buildMessage({ to, subject, body, attachments: files }) {
+  if (files.length === 0) {
+    return [
+      `To: ${encodeHeader(to)}`,
+      `Subject: ${encodeHeader(subject)}`,
+      "Content-Type: text/plain; charset=utf-8",
+      "Content-Transfer-Encoding: base64",
+      "",
+      Buffer.from(body, "utf8").toString("base64"),
+    ].join("\r\n");
+  }
+
+  const boundary = `gmail-cli-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const lines = [
+    `To: ${encodeHeader(to)}`,
+    `Subject: ${encodeHeader(subject)}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    Buffer.from(body, "utf8").toString("base64"),
+  ];
+
+  for (const file of files) {
+    const fullPath = path.resolve(ROOT, file);
+    if (!fs.existsSync(fullPath)) throw new Error(`Attachment not found: ${file}`);
+    if (!fs.statSync(fullPath).isFile()) throw new Error(`Attachment is not a file: ${file}`);
+
+    const filename = path.basename(fullPath);
+    lines.push(
+      `--${boundary}`,
+      `Content-Type: ${mimeTypeForFile(fullPath)}; name="${encodeHeader(filename)}"`,
+      "Content-Transfer-Encoding: base64",
+      `Content-Disposition: attachment; filename="${encodeHeader(filename)}"`,
+      "",
+      fs.readFileSync(fullPath).toString("base64")
+    );
+  }
+
+  lines.push(`--${boundary}--`, "");
+  return lines.join("\r\n");
+}
+
 async function attachments(args) {
   const messageId = args[0];
   if (!messageId) throw new Error("Usage: node tools/gmail/cli.js attachments <messageId>");
@@ -346,16 +424,17 @@ async function read(args) {
 async function send(args) {
   const options = parseOptions(args);
   if (!options.to || !options.subject || !options.body) {
-    throw new Error('Usage: node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message"');
+    throw new Error(
+      'Usage: node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file]'
+    );
   }
 
-  const raw = [
-    `To: ${options.to}`,
-    `Subject: ${options.subject}`,
-    "Content-Type: text/plain; charset=utf-8",
-    "",
-    options.body,
-  ].join("\r\n");
+  const raw = buildMessage({
+    to: options.to,
+    subject: options.subject,
+    body: options.body,
+    attachments: valuesForOption(options, "attach"),
+  });
   const encoded = Buffer.from(raw).toString("base64url");
   const data = await gmail("/users/me/messages/send", {
     method: "POST",
@@ -377,7 +456,13 @@ function parseOptions(args) {
     if (!next || next.startsWith("--")) {
       parsed[key] = true;
     } else {
-      parsed[key] = next;
+      if (parsed[key] == null) {
+        parsed[key] = next;
+      } else if (Array.isArray(parsed[key])) {
+        parsed[key].push(next);
+      } else {
+        parsed[key] = [parsed[key], next];
+      }
       i += 1;
     }
   }
@@ -393,7 +478,7 @@ Usage:
   node tools/gmail/cli.js read <messageId>
   node tools/gmail/cli.js attachments <messageId>
   node tools/gmail/cli.js download-attachments <messageId> [--out downloads/gmail]
-  node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message"
+  node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file]
 
 Examples:
   npm run gmail:auth
@@ -402,6 +487,7 @@ Examples:
   node tools/gmail/cli.js attachments 18c123abc
   node tools/gmail/cli.js download-attachments 18c123abc --out downloads/gmail
   node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
+  node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
 `);
 }
 

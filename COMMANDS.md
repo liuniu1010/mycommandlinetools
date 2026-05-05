@@ -100,6 +100,13 @@ Send a plain-text message:
 node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
 ```
 
+Send a message with one or more attachments:
+
+```bash
+node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
+node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/a.pdf --attach /tmp/b.docx
+```
+
 ## Upwork
 
 Implementation:

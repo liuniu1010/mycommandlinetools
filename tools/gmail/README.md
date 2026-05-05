@@ -24,6 +24,7 @@ node tools/gmail/cli.js read <messageId>
 node tools/gmail/cli.js attachments <messageId>
 node tools/gmail/cli.js download-attachments <messageId> --out downloads/gmail
 node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
+node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
 ```
 
 OAuth tokens are stored locally in `tools/gmail/.token.json`.
