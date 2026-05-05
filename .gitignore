@@ -6,3 +6,5 @@ credential
 tools/upwork/.token.json
 node_modules/
 npm-debug.log*
+.codex/
+.claude/
