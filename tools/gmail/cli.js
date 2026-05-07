@@ -13,7 +13,7 @@ const TOKEN_FILE = path.join(TOOL_DIR, ".token.json");
 const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GMAIL_ENDPOINT = "https://gmail.googleapis.com/gmail/v1";
-const DEFAULT_CALLBACK_URL = "http://localhost:3001/callback";
+const DEFAULT_CALLBACK_URL = "http://localhost:3000/callback";
 const DEFAULT_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.send",

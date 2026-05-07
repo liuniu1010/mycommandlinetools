@@ -9,7 +9,7 @@ Create or update `.env` in the repository root:
 ```bash
 GCALENDAR_CLIENT_ID=your_google_oauth_client_id
 GCALENDAR_CLIENT_SECRET=your_google_oauth_client_secret
-GCALENDAR_CALLBACK_URL=http://localhost:3001/callback
+GCALENDAR_CALLBACK_URL=http://localhost:3000/callback
 ```
 
 Create the OAuth client in Google Cloud Console as a web application, enable the Google Calendar API, and add the callback URL above as an authorized redirect URI.

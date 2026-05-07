@@ -94,6 +94,53 @@ Delete an event:
 node tools/gcalendar/cli.js delete-event <eventId>
 ```
 
+## Freelancer.com
+
+Implementation:
+
+```text
+tools/freelancer/cli.js
+```
+
+Tool notes:
+
+- Uses the official Freelancer.com API, not website scraping.
+- Uses the root `.env` file.
+- Saves OAuth tokens locally to `tools/freelancer/.token.json`.
+- Starts with read-only project search and project detail commands.
+
+Configure credentials:
+
+```bash
+FREELANCER_CLIENT_ID=your_client_id
+FREELANCER_CLIENT_SECRET=your_client_secret
+FREELANCER_CALLBACK_URL=http://localhost:3000/callback
+```
+
+Authenticate:
+
+```bash
+npm run freelancer:auth
+```
+
+Search active projects:
+
+```bash
+npm run freelancer:search -- "java spring boot" --limit 20
+```
+
+Fetch one project by ID:
+
+```bash
+node tools/freelancer/cli.js project <projectId>
+```
+
+Open a project in the browser:
+
+```bash
+node tools/freelancer/cli.js open <projectId-or-url>
+```
+
 ## Gmail
 
 Implementation:

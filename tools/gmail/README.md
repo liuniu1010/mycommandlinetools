@@ -9,7 +9,7 @@ Create or update `.env` in the repository root:
 ```bash
 GMAIL_CLIENT_ID=your_google_oauth_client_id
 GMAIL_CLIENT_SECRET=your_google_oauth_client_secret
-GMAIL_CALLBACK_URL=http://localhost:3001/callback
+GMAIL_CALLBACK_URL=http://localhost:3000/callback
 ```
 
 Create the OAuth client in Google Cloud Console as a web application and add the callback URL above as an authorized redirect URI.
