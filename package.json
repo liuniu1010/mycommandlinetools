@@ -6,6 +6,7 @@
   "bin": {
     "freelancer-cli": "./tools/freelancer/cli.js",
     "gcalendar-cli": "./tools/gcalendar/cli.js",
+    "linkedin-cli": "./tools/linkedin/cli.js",
     "upwork-cli": "./tools/upwork/cli.js",
     "gmail-cli": "./tools/gmail/cli.js"
   },
@@ -21,6 +22,7 @@
     "gmail:download-attachments": "node tools/gmail/cli.js download-attachments",
     "gmail:labels": "node tools/gmail/cli.js labels",
     "gmail:list": "node tools/gmail/cli.js list",
+    "linkedin:search": "node tools/linkedin/cli.js search",
     "upwork:auth": "node tools/upwork/cli.js auth",
     "upwork:search": "node tools/upwork/cli.js search",
     "type-check": "node scripts/type-check.js",

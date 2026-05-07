@@ -141,6 +141,38 @@ Open a project in the browser:
 node tools/freelancer/cli.js open <projectId-or-url>
 ```
 
+## LinkedIn
+
+Implementation:
+
+```text
+tools/linkedin/cli.js
+```
+
+Tool notes:
+
+- Builds LinkedIn Jobs search URLs and can open them in your browser.
+- Does not scrape LinkedIn, automate your account, or call restricted Talent APIs.
+- Useful while keeping search/review actions manual inside LinkedIn.
+
+Print a job search URL:
+
+```bash
+npm run linkedin:search -- "java spring boot"
+```
+
+Open a filtered job search:
+
+```bash
+npm run linkedin:search -- "java spring boot" --location "Auckland, New Zealand" --date week --open
+```
+
+Use extra filters:
+
+```bash
+node tools/linkedin/cli.js search "ai agent" --workplace remote,hybrid --type contract --experience senior
+```
+
 ## Gmail
 
 Implementation:
