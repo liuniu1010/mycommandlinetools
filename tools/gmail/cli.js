@@ -15,7 +15,7 @@ const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GMAIL_ENDPOINT = "https://gmail.googleapis.com/gmail/v1";
 const DEFAULT_CALLBACK_URL = "http://localhost:3000/callback";
 const DEFAULT_SCOPES = [
-  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.modify",
   "https://www.googleapis.com/auth/gmail.send",
 ];
 
@@ -253,6 +253,67 @@ async function labels() {
     });
 }
 
+async function getLabels() {
+  const data = await gmail("/users/me/labels");
+  return data.labels || [];
+}
+
+function findLabel(labels, value) {
+  const needle = String(value || "").trim();
+  if (!needle) return null;
+  return labels.find((label) => label.id === needle || label.name === needle) || null;
+}
+
+async function createLabel(name) {
+  return gmail("/users/me/labels", {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      labelListVisibility: "labelShow",
+      messageListVisibility: "show",
+    }),
+  });
+}
+
+async function resolveLabelId(value, { createMissing = false } = {}) {
+  const labelsList = await getLabels();
+  const existing = findLabel(labelsList, value);
+  if (existing) return existing.id;
+  if (!createMissing) {
+    throw new Error(`Label not found: ${value}`);
+  }
+  const created = await createLabel(value);
+  return created.id;
+}
+
+async function move(args) {
+  const messageId = args[0];
+  const options = parseOptions(args.slice(1));
+  if (!messageId || !options.from || !options.to) {
+    throw new Error(
+      'Usage: node tools/gmail/cli.js move <messageId> --from "to do list" --to EGGS [--create-label]'
+    );
+  }
+
+  const fromLabelIds = [];
+  for (const label of valuesForOption(options, "from")) {
+    fromLabelIds.push(await resolveLabelId(label));
+  }
+  const toLabelId = await resolveLabelId(options.to, { createMissing: Boolean(options["create-label"]) });
+  const data = await gmail(`/users/me/messages/${encodeURIComponent(messageId)}/modify`, {
+    method: "POST",
+    body: JSON.stringify({
+      addLabelIds: [toLabelId],
+      removeLabelIds: fromLabelIds,
+    }),
+  });
+
+  console.log(`Moved message ${data.id}`);
+  console.log(`Added label: ${options.to}`);
+  console.log(`Removed label(s): ${valuesForOption(options, "from").join(", ")}`);
+  console.log(`Current label IDs: ${(data.labelIds || []).join(", ")}`);
+}
+
 function collectAttachments(part, attachments = []) {
   if (!part) return attachments;
   const filename = part.filename || "";
@@ -476,6 +537,7 @@ Usage:
   npm run gmail:labels
   npm run gmail:list -- [--query "from:client@example.com"] [--limit 10] [--label INBOX]
   node tools/gmail/cli.js read <messageId>
+  node tools/gmail/cli.js move <messageId> --from "to do list" --to EGGS [--create-label]
   node tools/gmail/cli.js attachments <messageId>
   node tools/gmail/cli.js download-attachments <messageId> [--out downloads/gmail]
   node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file]
@@ -484,6 +546,7 @@ Examples:
   npm run gmail:auth
   npm run gmail:labels
   npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
+  node tools/gmail/cli.js move 18c123abc --from "to do list" --to EGGS
   node tools/gmail/cli.js attachments 18c123abc
   node tools/gmail/cli.js download-attachments 18c123abc --out downloads/gmail
   node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
@@ -501,6 +564,7 @@ async function main() {
   if (command === "labels") return labels();
   if (command === "list") return list(args);
   if (command === "read") return read(args);
+  if (command === "move") return move(args);
   if (command === "attachments") return attachments(args);
   if (command === "download-attachments") return downloadAttachments(args);
   if (command === "send") return send(args);

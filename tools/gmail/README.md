@@ -10,6 +10,7 @@ Create or update `.env` in the repository root:
 GMAIL_CLIENT_ID=your_google_oauth_client_id
 GMAIL_CLIENT_SECRET=your_google_oauth_client_secret
 GMAIL_CALLBACK_URL=http://localhost:3000/callback
+GMAIL_SCOPES=https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send
 ```
 
 Create the OAuth client in Google Cloud Console as a web application and add the callback URL above as an authorized redirect URI.
@@ -21,6 +22,8 @@ npm run gmail:auth
 npm run gmail:labels
 npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
 node tools/gmail/cli.js read <messageId>
+node tools/gmail/cli.js move <messageId> --from "to do list" --to EGGS
+node tools/gmail/cli.js move <messageId> --from "to do list" --to "New Label" --create-label
 node tools/gmail/cli.js attachments <messageId>
 node tools/gmail/cli.js download-attachments <messageId> --out downloads/gmail
 node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
@@ -28,3 +31,5 @@ node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Atta
 ```
 
 OAuth tokens are stored locally in `tools/gmail/.token.json`.
+
+The `move` command uses Gmail labels: it adds the target label and removes the source label. Use `--create-label` to create a missing target label.

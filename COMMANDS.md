@@ -186,7 +186,7 @@ Tool notes:
 - Requires a Google Cloud OAuth client with Gmail API access enabled.
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/gmail/.token.json`.
-- Uses read-only and send scopes by default.
+- Uses modify and send scopes by default.
 
 Authenticate with Gmail:
 
@@ -210,6 +210,13 @@ Read one message:
 
 ```bash
 node tools/gmail/cli.js read <messageId>
+```
+
+Move one message between Gmail labels:
+
+```bash
+node tools/gmail/cli.js move <messageId> --from "to do list" --to EGGS
+node tools/gmail/cli.js move <messageId> --from "to do list" --to "New Label" --create-label
 ```
 
 List attachments on one message:
