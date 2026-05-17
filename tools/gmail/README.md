@@ -30,6 +30,6 @@ node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test
 node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
 ```
 
-OAuth tokens are stored locally in `tools/gmail/.token.json`.
+OAuth tokens are stored locally in `tools/gmail/.token.json`. The token file also includes `account_email` so you can see which Gmail account authorized the CLI.
 
 The `move` command uses Gmail labels: it adds the target label and removes the source label. Use `--create-label` to create a missing target label.

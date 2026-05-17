@@ -185,7 +185,7 @@ Tool notes:
 
 - Requires a Google Cloud OAuth client with Gmail API access enabled.
 - Uses the root `.env` file.
-- Saves OAuth tokens locally to `tools/gmail/.token.json`.
+- Saves OAuth tokens locally to `tools/gmail/.token.json`, including the authorized `account_email`.
 - Uses modify and send scopes by default.
 
 Authenticate with Gmail:
