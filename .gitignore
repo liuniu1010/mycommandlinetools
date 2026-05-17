@@ -4,10 +4,7 @@ AGENTS.md
 CLAUDE.md
 !.env.example
 credential
-.upwork-token.json
-tools/upwork/.token.json
-tools/gmail/.token.json
-tools/gcalendar/.token.json
+.token.json
 node_modules/
 dist/
 downloads/
