@@ -26,3 +26,5 @@ node tools/gcalendar/cli.js delete-event <eventId>
 ```
 
 OAuth tokens are stored locally in `tools/gcalendar/.token.json`. The token file also includes account metadata from the primary calendar when available.
+
+Event list output includes the raw Google Calendar time plus UTC and local time fields; local time uses the current system timezone.

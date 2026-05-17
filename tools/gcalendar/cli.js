@@ -242,6 +242,36 @@ async function calendars() {
   });
 }
 
+function eventTime(value) {
+  if (!value) {
+    return {
+      raw: "",
+      utc: "",
+      local: "",
+    };
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return {
+      raw: value,
+      utc: "all-day",
+      local: value,
+    };
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return {
+      raw: value,
+      utc: "",
+      local: "",
+    };
+  }
+  return {
+    raw: value,
+    utc: date.toISOString(),
+    local: date.toString(),
+  };
+}
+
 async function events(args) {
   const options = parseOptions(args);
   const calendarId = options.calendar || "primary";
@@ -258,12 +288,16 @@ async function events(args) {
   const items = data.items || [];
   console.log(`Found ${items.length} event(s).\n`);
   items.forEach((item, index) => {
-    const start = item.start?.dateTime || item.start?.date || "";
-    const end = item.end?.dateTime || item.end?.date || "";
+    const start = eventTime(item.start?.dateTime || item.start?.date || "");
+    const end = eventTime(item.end?.dateTime || item.end?.date || "");
     console.log(`${index + 1}. ${item.summary || "(no title)"}`);
     console.log(`   id: ${item.id}`);
-    console.log(`   start: ${start}`);
-    console.log(`   end: ${end}`);
+    console.log(`   start: ${start.raw}`);
+    console.log(`   start_utc: ${start.utc}`);
+    console.log(`   start_local: ${start.local}`);
+    console.log(`   end: ${end.raw}`);
+    console.log(`   end_utc: ${end.utc}`);
+    console.log(`   end_local: ${end.local}`);
     if (item.location) console.log(`   location: ${item.location}`);
     if (item.htmlLink) console.log(`   url: ${item.htmlLink}`);
     console.log("");

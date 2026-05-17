@@ -76,6 +76,8 @@ List upcoming events:
 npm run gcalendar:events -- --calendar primary --limit 10
 ```
 
+Event output includes raw Google Calendar time plus UTC and local time fields; local time uses the current system timezone.
+
 Create an event:
 
 ```bash
