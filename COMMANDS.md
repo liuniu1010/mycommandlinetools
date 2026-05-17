@@ -206,6 +206,8 @@ List messages:
 npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
 ```
 
+Message output includes both `date_utc` and `date_local`; local time uses the current system timezone.
+
 Read one message:
 
 ```bash

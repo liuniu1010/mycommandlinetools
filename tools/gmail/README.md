@@ -32,4 +32,6 @@ node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Atta
 
 OAuth tokens are stored locally in `tools/gmail/.token.json`. The token file also includes `account_email` so you can see which Gmail account authorized the CLI.
 
+Message list and read output include both `date_utc` and `date_local`; local time uses the current system timezone.
+
 The `move` command uses Gmail labels: it adds the target label and removes the source label. Use `--create-label` to create a missing target label.

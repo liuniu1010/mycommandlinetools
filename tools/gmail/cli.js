@@ -226,6 +226,20 @@ async function gmail(pathname, options = {}) {
   return body;
 }
 
+function messageTimes(message, headers = {}) {
+  const date = message.internalDate ? new Date(Number(message.internalDate)) : new Date(headers.date || "");
+  if (Number.isNaN(date.getTime())) {
+    return {
+      utc: "",
+      local: "",
+    };
+  }
+  return {
+    utc: date.toISOString(),
+    local: date.toString(),
+  };
+}
+
 async function list(args) {
   const options = parseOptions(args);
   const params = new URLSearchParams({
@@ -240,10 +254,12 @@ async function list(args) {
   for (const message of messages) {
     const detail = await gmail(`/users/me/messages/${message.id}?format=metadata`);
     const headers = Object.fromEntries((detail.payload?.headers || []).map((h) => [h.name.toLowerCase(), h.value]));
+    const times = messageTimes(detail, headers);
     console.log(`${message.id}`);
     console.log(`  from: ${headers.from || ""}`);
     console.log(`  subject: ${headers.subject || ""}`);
-    console.log(`  date: ${headers.date || ""}`);
+    console.log(`  date_utc: ${times.utc}`);
+    console.log(`  date_local: ${times.local}`);
     console.log(`  snippet: ${detail.snippet || ""}`);
     console.log("");
   }
@@ -494,7 +510,9 @@ async function read(args) {
   const id = args[0];
   if (!id) throw new Error("Usage: node tools/gmail/cli.js read <messageId>");
   const data = await gmail(`/users/me/messages/${encodeURIComponent(id)}?format=full`);
-  console.log(JSON.stringify(data, null, 2));
+  const headers = Object.fromEntries((data.payload?.headers || []).map((h) => [h.name.toLowerCase(), h.value]));
+  const times = messageTimes(data, headers);
+  console.log(JSON.stringify({ date_utc: times.utc, date_local: times.local, ...data }, null, 2));
 }
 
 async function send(args) {
