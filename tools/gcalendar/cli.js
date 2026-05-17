@@ -61,9 +61,11 @@ function readToken() {
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
 
-function writeToken(token, previous = {}) {
+function writeToken(token, previous = {}, metadata = {}) {
   const expiresAt = Date.now() + Math.max(0, Number(token.expires_in || 0) - 60) * 1000;
   const payload = {
+    account_email: metadata.account_email || previous.account_email,
+    account_name: metadata.account_name || previous.account_name,
     access_token: token.access_token,
     refresh_token: token.refresh_token || previous.refresh_token,
     token_type: token.token_type || previous.token_type || "Bearer",
@@ -71,6 +73,23 @@ function writeToken(token, previous = {}) {
     expires_at: expiresAt,
   };
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(payload, null, 2), { mode: 0o600 });
+}
+
+async function getCalendarProfile(accessToken) {
+  const res = await fetch(`${CALENDAR_ENDPOINT}/users/me/calendarList`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const text = await res.text();
+  const body = text ? JSON.parse(text) : {};
+  if (!res.ok) {
+    throw new Error(`Google Calendar profile request failed (${res.status}): ${JSON.stringify(body)}`);
+  }
+  const calendars = body.items || [];
+  const primary = calendars.find((calendar) => calendar.primary === true) || calendars[0] || {};
+  return {
+    account_email: primary.id,
+    account_name: primary.summary,
+  };
 }
 
 async function requestToken(params) {
@@ -107,7 +126,8 @@ async function getAccessToken() {
     client_secret: config.clientSecret,
     refresh_token: token.refresh_token,
   });
-  writeToken(refreshed, token);
+  const profile = await getCalendarProfile(refreshed.access_token);
+  writeToken(refreshed, token, profile);
   return refreshed.access_token;
 }
 
@@ -167,7 +187,8 @@ async function auth() {
         code,
         redirect_uri: config.callbackUrl,
       });
-      writeToken(token);
+      const profile = await getCalendarProfile(token.access_token);
+      writeToken(token, {}, profile);
       res.writeHead(200, { "Content-Type": "text/plain" });
       res.end("Google Calendar CLI authorization complete. You can close this tab.");
       console.log(`Saved OAuth token to ${TOKEN_FILE}`);

@@ -59,17 +59,49 @@ function readToken() {
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
 
-function writeToken(token) {
+function writeToken(token, previous = {}, metadata = {}) {
   const expiresAt = token.expires_in
     ? Date.now() + Math.max(0, Number(token.expires_in) - 60) * 1000
     : null;
   const payload = {
+    account_email: metadata.account_email || previous.account_email,
+    account_name: metadata.account_name || previous.account_name,
+    account_id: metadata.account_id || previous.account_id,
     access_token: token.access_token,
-    refresh_token: token.refresh_token,
-    token_type: token.token_type || "Bearer",
+    refresh_token: token.refresh_token || previous.refresh_token,
+    token_type: token.token_type || previous.token_type || "Bearer",
     expires_at: expiresAt,
   };
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(payload, null, 2), { mode: 0o600 });
+}
+
+async function getFreelancerProfile(accessToken, baseUrl = DEFAULT_BASE_URL) {
+  const res = await fetch(new URL("/api/users/0.1/self/", baseUrl), {
+    headers: {
+      "Freelancer-OAuth-V1": accessToken,
+      "User-Agent": "personal-toolset freelancer-cli",
+    },
+  });
+  const text = await res.text();
+  const body = text ? JSON.parse(text) : {};
+  if (!res.ok || body.status === "error") {
+    throw new Error(`Freelancer profile request failed (${res.status}): ${JSON.stringify(body)}`);
+  }
+  const user = body.result || body.user || body;
+  return {
+    account_email: user.email,
+    account_name: user.display_name || user.public_name || user.username,
+    account_id: user.id == null ? undefined : String(user.id),
+  };
+}
+
+async function tryGetFreelancerProfile(accessToken, baseUrl) {
+  try {
+    return await getFreelancerProfile(accessToken, baseUrl);
+  } catch (err) {
+    console.warn(`Could not save Freelancer account metadata: ${err.message}`);
+    return {};
+  }
 }
 
 async function requestToken(params) {
@@ -106,7 +138,8 @@ async function getAccessToken() {
     client_secret: config.clientSecret,
     refresh_token: token.refresh_token,
   });
-  writeToken(refreshed);
+  const profile = await tryGetFreelancerProfile(refreshed.access_token, config.baseUrl);
+  writeToken(refreshed, token, profile);
   return refreshed.access_token;
 }
 
@@ -130,7 +163,7 @@ async function auth(args) {
       client_secret: config.clientSecret,
       scope: config.scope,
     });
-    writeToken(token);
+    writeToken(token, {}, { account_name: "client_credentials" });
     console.log(`Saved OAuth token to ${TOKEN_FILE}`);
     return;
   }
@@ -180,7 +213,8 @@ async function auth(args) {
         code,
         redirect_uri: config.callbackUrl,
       });
-      writeToken(token);
+      const profile = await tryGetFreelancerProfile(token.access_token, config.baseUrl);
+      writeToken(token, {}, profile);
       res.writeHead(200, { "Content-Type": "text/plain" });
       res.end("Freelancer CLI authorization complete. You can close this tab.");
       console.log(`Saved OAuth token to ${TOKEN_FILE}`);

@@ -49,4 +49,4 @@ Open a project in the browser:
 node tools/freelancer/cli.js open <projectId-or-url>
 ```
 
-OAuth tokens are stored locally in `tools/freelancer/.token.json`.
+OAuth tokens are stored locally in `tools/freelancer/.token.json`. Browser OAuth tokens also include account metadata when the Freelancer API returns it; client-credentials tokens are labelled as app credentials.

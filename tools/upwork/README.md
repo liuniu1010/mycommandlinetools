@@ -23,5 +23,4 @@ node tools/upwork/cli.js search "aws lambda" --verified-only
 node tools/upwork/cli.js open <jobId-or-ciphertext>
 ```
 
-OAuth tokens are stored locally in `tools/upwork/.token.json`.
-
+OAuth tokens are stored locally in `tools/upwork/.token.json`. The token file also includes account metadata when the Upwork API key has permission to read the current user.

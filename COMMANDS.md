@@ -55,7 +55,7 @@ Tool notes:
 
 - Requires a Google Cloud OAuth client with Google Calendar API enabled.
 - Uses the root `.env` file.
-- Saves OAuth tokens locally to `tools/gcalendar/.token.json`.
+- Saves OAuth tokens locally to `tools/gcalendar/.token.json`, including account metadata from the primary calendar when available.
 - Uses the Calendar scope so it can read calendars and create/update events.
 
 Authenticate with Google Calendar:
@@ -106,7 +106,7 @@ Tool notes:
 
 - Uses the official Freelancer.com API, not website scraping.
 - Uses the root `.env` file.
-- Saves OAuth tokens locally to `tools/freelancer/.token.json`.
+- Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
 - Starts with read-only project search and project detail commands.
 
 Configure credentials:
@@ -256,7 +256,7 @@ Tool notes:
 
 - Requires an enabled Upwork OAuth2 API key.
 - Uses the root `.env` file.
-- Saves OAuth tokens locally to `tools/upwork/.token.json`.
+- Saves OAuth tokens locally to `tools/upwork/.token.json`, including account metadata when permitted by the API key.
 - Does not submit proposals. Use it to search and inspect jobs, then apply
   manually in the Upwork website.
 

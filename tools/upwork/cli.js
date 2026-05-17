@@ -58,15 +58,58 @@ function readToken() {
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
 
-function writeToken(token) {
+function writeToken(token, previous = {}, metadata = {}) {
   const expiresAt = Date.now() + Math.max(0, Number(token.expires_in || 0) - 60) * 1000;
   const payload = {
+    account_email: metadata.account_email || previous.account_email,
+    account_name: metadata.account_name || previous.account_name,
+    account_id: metadata.account_id || previous.account_id,
     access_token: token.access_token,
-    refresh_token: token.refresh_token,
-    token_type: token.token_type || "Bearer",
+    refresh_token: token.refresh_token || previous.refresh_token,
+    token_type: token.token_type || previous.token_type || "Bearer",
     expires_at: expiresAt,
   };
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(payload, null, 2), { mode: 0o600 });
+}
+
+async function getUpworkProfile(accessToken) {
+  const res = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: `
+        query currentUser {
+          user {
+            id
+            email
+            name
+          }
+        }
+      `,
+    }),
+  });
+  const body = await res.json();
+  if (!res.ok || body.errors) {
+    throw new Error(`Upwork profile request failed (${res.status}): ${JSON.stringify(body)}`);
+  }
+  const user = body.data?.user || {};
+  return {
+    account_email: user.email,
+    account_name: user.name,
+    account_id: user.id == null ? undefined : String(user.id),
+  };
+}
+
+async function tryGetUpworkProfile(accessToken) {
+  try {
+    return await getUpworkProfile(accessToken);
+  } catch (err) {
+    console.warn(`Could not save Upwork account metadata: ${err.message}`);
+    return {};
+  }
 }
 
 async function requestToken(params) {
@@ -103,7 +146,8 @@ async function getAccessToken() {
     client_secret: config.clientSecret,
     refresh_token: token.refresh_token,
   });
-  writeToken(refreshed);
+  const profile = await tryGetUpworkProfile(refreshed.access_token);
+  writeToken(refreshed, token, profile);
   return refreshed.access_token;
 }
 
@@ -160,7 +204,8 @@ async function auth() {
         code,
         redirect_uri: config.callbackUrl,
       });
-      writeToken(token);
+      const profile = await tryGetUpworkProfile(token.access_token);
+      writeToken(token, {}, profile);
       res.writeHead(200, { "Content-Type": "text/plain" });
       res.end("Upwork CLI authorization complete. You can close this tab.");
       console.log(`Saved OAuth token to ${TOKEN_FILE}`);

@@ -25,4 +25,4 @@ node tools/gcalendar/cli.js update-event <eventId> --summary "Updated title"
 node tools/gcalendar/cli.js delete-event <eventId>
 ```
 
-OAuth tokens are stored locally in `tools/gcalendar/.token.json`.
+OAuth tokens are stored locally in `tools/gcalendar/.token.json`. The token file also includes account metadata from the primary calendar when available.
