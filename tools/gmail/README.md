@@ -18,9 +18,9 @@ Create the OAuth client in Google Cloud Console as a web application and add the
 ## Usage
 
 ```bash
-npm run gmail:auth
-npm run gmail:labels
-npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
+node tools/gmail/cli.js auth
+node tools/gmail/cli.js labels
+node tools/gmail/cli.js list --query "is:unread newer_than:7d" --limit 10
 node tools/gmail/cli.js read <messageId>
 node tools/gmail/cli.js move <messageId> --from "to do list" --to EGGS
 node tools/gmail/cli.js move <messageId> --from "to do list" --to "New Label" --create-label

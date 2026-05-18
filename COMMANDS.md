@@ -61,19 +61,19 @@ Tool notes:
 Authenticate with Google Calendar:
 
 ```bash
-npm run gcalendar:auth
+node tools/gcalendar/cli.js auth
 ```
 
 List calendars:
 
 ```bash
-npm run gcalendar:calendars
+node tools/gcalendar/cli.js calendars
 ```
 
 List upcoming events:
 
 ```bash
-npm run gcalendar:events -- --calendar primary --limit 10
+node tools/gcalendar/cli.js events --calendar primary --limit 10
 ```
 
 Event output includes raw Google Calendar time plus UTC and local time fields; local time uses the current system timezone.
@@ -122,13 +122,13 @@ FREELANCER_CALLBACK_URL=http://localhost:3000/callback
 Authenticate:
 
 ```bash
-npm run freelancer:auth
+node tools/freelancer/cli.js auth
 ```
 
 Search active projects:
 
 ```bash
-npm run freelancer:search -- "java spring boot" --limit 20
+node tools/freelancer/cli.js search "java spring boot" --limit 20
 ```
 
 Fetch one project by ID:
@@ -160,13 +160,13 @@ Tool notes:
 Print a job search URL:
 
 ```bash
-npm run linkedin:search -- "java spring boot"
+node tools/linkedin/cli.js search "java spring boot"
 ```
 
 Open a filtered job search:
 
 ```bash
-npm run linkedin:search -- "java spring boot" --location "Auckland, New Zealand" --date week --open
+node tools/linkedin/cli.js search "java spring boot" --location "Auckland, New Zealand" --date week --open
 ```
 
 Use extra filters:
@@ -193,19 +193,19 @@ Tool notes:
 Authenticate with Gmail:
 
 ```bash
-npm run gmail:auth
+node tools/gmail/cli.js auth
 ```
 
 List Gmail labels:
 
 ```bash
-npm run gmail:labels
+node tools/gmail/cli.js labels
 ```
 
 List messages:
 
 ```bash
-npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
+node tools/gmail/cli.js list --query "is:unread newer_than:7d" --limit 10
 ```
 
 Message output includes both `date_utc` and `date_local`; local time uses the current system timezone.
@@ -267,25 +267,25 @@ Tool notes:
 Authenticate with Upwork:
 
 ```bash
-npm run upwork:auth
+node tools/upwork/cli.js auth
 ```
 
 Search jobs:
 
 ```bash
-npm run upwork:search -- "node.js openai api" --limit 20
+node tools/upwork/cli.js search "node.js openai api" --limit 20
 ```
 
 Search by relevance:
 
 ```bash
-npm run upwork:search -- "node.js openai api" --limit 20 --sort relevance
+node tools/upwork/cli.js search "node.js openai api" --limit 20 --sort relevance
 ```
 
 Search only jobs with verified client payment, if supported by the API:
 
 ```bash
-npm run upwork:search -- "aws lambda" --verified-only
+node tools/upwork/cli.js search "aws lambda" --verified-only
 ```
 
 Open a job in the browser:

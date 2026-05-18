@@ -17,9 +17,9 @@ Create the OAuth client in Google Cloud Console as a web application, enable the
 ## Usage
 
 ```bash
-npm run gcalendar:auth
-npm run gcalendar:calendars
-npm run gcalendar:events -- --calendar primary --limit 10
+node tools/gcalendar/cli.js auth
+node tools/gcalendar/cli.js calendars
+node tools/gcalendar/cli.js events --calendar primary --limit 10
 node tools/gcalendar/cli.js add-event --summary "Test" --start 2026-05-05T10:00:00+12:00 --end 2026-05-05T10:30:00+12:00
 node tools/gcalendar/cli.js update-event <eventId> --summary "Updated title"
 node tools/gcalendar/cli.js delete-event <eventId>

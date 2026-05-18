@@ -21,7 +21,7 @@ The callback URL must match the redirect URL configured for your Freelancer.com 
 Authorize with the browser OAuth flow:
 
 ```bash
-npm run freelancer:auth
+node tools/freelancer/cli.js auth
 ```
 
 If your Freelancer app is configured for owner-only desktop access, client credentials may be available:
@@ -33,7 +33,7 @@ node tools/freelancer/cli.js auth --client-credentials
 Search active projects:
 
 ```bash
-npm run freelancer:search -- "java spring boot" --limit 20
+node tools/freelancer/cli.js search "java spring boot" --limit 20
 node tools/freelancer/cli.js search "ai agent" --limit 10 --offset 20
 ```
 

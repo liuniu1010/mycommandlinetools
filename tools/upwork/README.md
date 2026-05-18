@@ -17,8 +17,8 @@ The API key must be enabled by Upwork before OAuth will work.
 ## Usage
 
 ```bash
-npm run upwork:auth
-npm run upwork:search -- "node.js openai api" --limit 20
+node tools/upwork/cli.js auth
+node tools/upwork/cli.js search "node.js openai api" --limit 20
 node tools/upwork/cli.js search "aws lambda" --verified-only
 node tools/upwork/cli.js open <jobId-or-ciphertext>
 ```

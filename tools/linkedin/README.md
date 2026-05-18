@@ -11,13 +11,13 @@ LinkedIn job-search APIs are not generally available for personal automation. Of
 Print a LinkedIn Jobs search URL:
 
 ```bash
-npm run linkedin:search -- "java spring boot"
+node tools/linkedin/cli.js search "java spring boot"
 ```
 
 Open the search in your browser:
 
 ```bash
-npm run linkedin:search -- "java spring boot" --location "Auckland, New Zealand" --open
+node tools/linkedin/cli.js search "java spring boot" --location "Auckland, New Zealand" --open
 ```
 
 Use filters:
