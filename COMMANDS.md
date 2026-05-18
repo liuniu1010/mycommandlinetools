@@ -344,6 +344,90 @@ node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Atta
 node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/a.pdf --attach /tmp/b.docx
 ```
 
+## Outlook
+
+Implementation:
+
+```text
+tools/outlook/cli.js
+```
+
+Tool notes:
+
+- Requires a Microsoft Entra app registration with Microsoft Graph delegated mail permissions.
+- Uses the root `.env` file.
+- Saves OAuth tokens locally to `tools/outlook/.token.json`, including account metadata from Graph `/me`.
+- Uses `offline_access`, `User.Read`, `Mail.ReadWrite`, and `Mail.Send` scopes by default.
+- Outlook does not have Gmail-style labels; this CLI uses Outlook mail folders for `labels`, `--label`, and `--create-label`.
+
+Configure credentials:
+
+```bash
+OUTLOOK_CLIENT_ID=your_microsoft_oauth_client_id
+OUTLOOK_CLIENT_SECRET=your_microsoft_oauth_client_secret
+OUTLOOK_CALLBACK_URL=http://localhost:3000/callback
+OUTLOOK_SCOPES=offline_access User.Read Mail.ReadWrite Mail.Send
+```
+
+Authenticate with Outlook:
+
+```bash
+node tools/outlook/cli.js auth
+```
+
+List Outlook folders:
+
+```bash
+node tools/outlook/cli.js labels
+```
+
+List messages:
+
+```bash
+node tools/outlook/cli.js list --query "invoice" --limit 10
+node tools/outlook/cli.js list --label Inbox --limit 10
+```
+
+Message output includes both `date_utc` and `date_local`; local time uses the current system timezone.
+
+Read one message:
+
+```bash
+node tools/outlook/cli.js read <messageId>
+```
+
+Move one message between Outlook folders:
+
+```bash
+node tools/outlook/cli.js move <messageId> --from Inbox --to Archive
+node tools/outlook/cli.js move <messageId> --from Inbox --to "New Folder" --create-label
+```
+
+List attachments on one message:
+
+```bash
+node tools/outlook/cli.js attachments <messageId>
+```
+
+Download attachments from one message:
+
+```bash
+node tools/outlook/cli.js download-attachments <messageId> --out downloads/outlook
+```
+
+Send a plain-text message:
+
+```bash
+node tools/outlook/cli.js send --to you@example.com --subject "Hello" --body "Test message"
+```
+
+Send a message with one or more attachments:
+
+```bash
+node tools/outlook/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
+node tools/outlook/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/a.pdf --attach /tmp/b.docx
+```
+
 ## Upwork
 
 Implementation:
