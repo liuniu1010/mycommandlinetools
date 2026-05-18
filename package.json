@@ -7,6 +7,7 @@
     "freelancer-cli": "./tools/freelancer/cli.js",
     "gcalendar-cli": "./tools/gcalendar/cli.js",
     "linkedin-cli": "./tools/linkedin/cli.js",
+    "notion-cli": "./tools/notion/cli.js",
     "upwork-cli": "./tools/upwork/cli.js",
     "gmail-cli": "./tools/gmail/cli.js"
   },

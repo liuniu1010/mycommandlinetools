@@ -96,6 +96,102 @@ Delete an event:
 node tools/gcalendar/cli.js delete-event <eventId>
 ```
 
+## Notion
+
+Implementation:
+
+```text
+tools/notion/cli.js
+```
+
+Tool notes:
+
+- Uses the official Notion REST API, not website scraping.
+- Uses the root `.env` file.
+- Uses OAuth 2.0 for a public Notion connection.
+- Saves OAuth tokens locally to `tools/notion/.token.json`, including Notion workspace and bot metadata when available.
+- The target pages and databases must be selected during OAuth authorization.
+- Prints JSON responses so Codex CLI, Claude Code, and shell scripts can parse output.
+
+Configure credentials:
+
+```bash
+NOTION_CLIENT_ID=your_notion_oauth_client_id
+NOTION_CLIENT_SECRET=your_notion_oauth_client_secret
+NOTION_CALLBACK_URL=http://localhost:3000/callback
+NOTION_VERSION=2022-06-28
+```
+
+Authenticate with Notion:
+
+```bash
+node tools/notion/cli.js auth
+```
+
+Search Notion:
+
+```bash
+node tools/notion/cli.js search --query "Projects" --filter database --limit 10
+```
+
+Resolve a database or page by name:
+
+```bash
+node tools/notion/cli.js resolve-database "Projects"
+node tools/notion/cli.js resolve-page "Project brief"
+```
+
+Read a page or database:
+
+```bash
+node tools/notion/cli.js get-page <pageId-or-url>
+node tools/notion/cli.js get-database <databaseId-or-url>
+```
+
+Query a database:
+
+```bash
+node tools/notion/cli.js query-database <databaseId-or-url> --limit 20
+node tools/notion/cli.js query-database <databaseId-or-url> --filter-json '{"property":"Status","status":{"equals":"Active"}}'
+```
+
+Create or update a database row:
+
+```bash
+node tools/notion/cli.js create-page --database-id <databaseId> --properties-json '{"Name":{"title":[{"text":{"content":"New item"}}]}}'
+node tools/notion/cli.js update-page <pageId-or-url> --properties-json '{"Status":{"status":{"name":"Done"}}}'
+```
+
+Archive a page:
+
+```bash
+node tools/notion/cli.js archive-page <pageId-or-url>
+```
+
+Work with blocks:
+
+```bash
+node tools/notion/cli.js list-block-children <blockId-or-url>
+node tools/notion/cli.js append-block-children <blockId-or-url> --children-json '[{"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Note"}}]}}]'
+node tools/notion/cli.js update-block <blockId-or-url> --body-json '{"paragraph":{"rich_text":[{"type":"text","text":{"content":"Updated"}}]}}'
+node tools/notion/cli.js archive-block <blockId-or-url>
+```
+
+Work with comments and users:
+
+```bash
+node tools/notion/cli.js create-comment --page-id <pageId> --text "Comment from CLI"
+node tools/notion/cli.js list-comments <blockId-or-url>
+node tools/notion/cli.js list-users --limit 50
+node tools/notion/cli.js get-user <userId>
+```
+
+Summarize database rows:
+
+```bash
+node tools/notion/cli.js query-database-summary <databaseId-or-url> --summary-json '{"metrics":[{"op":"count"}],"groupBy":{"property":"Status"}}'
+```
+
 ## Freelancer.com
 
 Implementation:
