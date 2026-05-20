@@ -18,4 +18,4 @@ npm-debug.log*
 .agents/logs/
 .agents/state/
 .codex/
-.claude/
+.claude/settings.local.json
