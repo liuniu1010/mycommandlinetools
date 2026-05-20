@@ -14,7 +14,7 @@ GMAIL_SCOPES=https://www.googleapis.com/auth/gmail.modify https://www.googleapis
 ```
 
 Create the OAuth client in Google Cloud Console as a web application and add the callback URL above as an authorized redirect URI.
-For step-by-step credential setup, see [../../OAUTH_SETUP.md#google-gmail-and-google-calendar](../../OAUTH_SETUP.md#google-gmail-and-google-calendar).
+For step-by-step credential setup, see [../../OAUTH_SETUP.md#google-gmail-google-calendar-and-google-drive](../../OAUTH_SETUP.md#google-gmail-google-calendar-and-google-drive).
 
 ## Usage
 

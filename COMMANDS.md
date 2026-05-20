@@ -98,6 +98,109 @@ Delete an event:
 node tools/gcalendar/cli.js delete-event <eventId>
 ```
 
+## Google Drive
+
+Implementation:
+
+```text
+tools/gdrive/cli.js
+```
+
+Tool notes:
+
+- Requires a Google Cloud OAuth client with Google Drive API enabled.
+- Uses the root `.env` file.
+- Saves OAuth tokens locally to `tools/gdrive/.token.json`, including account metadata when available.
+- Uses the full Drive scope by default so write commands can work.
+- Downloads blob files and exports Google Docs, Sheets, Slides, and Drawings.
+- Supports folder creation, upload, content replacement, metadata updates, move, copy, trash, untrash, and permanent delete.
+
+Configure credentials:
+
+```bash
+GDRIVE_CLIENT_ID=your_google_oauth_client_id
+GDRIVE_CLIENT_SECRET=your_google_oauth_client_secret
+GDRIVE_CALLBACK_URL=http://localhost:3000/callback
+GDRIVE_SCOPES=https://www.googleapis.com/auth/drive
+```
+
+Authenticate with Google Drive:
+
+```bash
+node tools/gdrive/cli.js auth
+```
+
+Search files:
+
+```bash
+node tools/gdrive/cli.js files --query "proposal" --limit 20
+```
+
+Search indexed file contents:
+
+```bash
+node tools/gdrive/cli.js files --text "resident visa" --limit 20
+```
+
+List files in a folder:
+
+```bash
+node tools/gdrive/cli.js files --folder <folderId> --limit 20
+```
+
+Read file metadata:
+
+```bash
+node tools/gdrive/cli.js get <fileId>
+```
+
+Download or export a file:
+
+```bash
+node tools/gdrive/cli.js download <fileId> --out downloads/gdrive
+```
+
+Open a file in the browser:
+
+```bash
+node tools/gdrive/cli.js open <fileId>
+```
+
+Create a folder:
+
+```bash
+node tools/gdrive/cli.js mkdir --name "Receipts" --parent <folderId>
+```
+
+Upload a file:
+
+```bash
+node tools/gdrive/cli.js upload ./report.pdf --parent <folderId>
+```
+
+Replace file content:
+
+```bash
+node tools/gdrive/cli.js update-content <fileId> ./report-v2.pdf
+```
+
+Update metadata or rename:
+
+```bash
+node tools/gdrive/cli.js update <fileId> --description "Updated from CLI"
+node tools/gdrive/cli.js rename <fileId> --name "New name.pdf"
+```
+
+Move, copy, trash, untrash, or permanently delete:
+
+```bash
+node tools/gdrive/cli.js move <fileId> --to <folderId>
+node tools/gdrive/cli.js copy <fileId> --name "Copy of report.pdf"
+node tools/gdrive/cli.js trash <fileId>
+node tools/gdrive/cli.js untrash <fileId>
+node tools/gdrive/cli.js delete <fileId> --yes
+```
+
 ## Notion
 
 Implementation:

@@ -15,6 +15,7 @@ npm run build                # Copy tools/ to dist/, generate dist/package.json
 node tools/upwork/cli.js help
 node tools/gmail/cli.js help
 node tools/gcalendar/cli.js help
+node tools/gdrive/cli.js help
 node tools/notion/cli.js help
 node tools/freelancer/cli.js help
 node tools/linkedin/cli.js help
@@ -29,6 +30,7 @@ Zero npm runtime dependencies — everything uses built-in Node APIs (native `fe
 - **tools/upwork/** — Upwork job search via GraphQL API (`https://api.upwork.com/graphql`). Commands: `auth`, `search [keywords] [--limit] [--offset] [--sort recency|relevance] [--verified-only]`, `job <id>`, `open <id>`.
 - **tools/gmail/** — Gmail via REST API. Commands: `auth`, `labels`, `list [--query] [--limit] [--label]`, `read <id>`, `move <id> --from <label> --to <label> [--create-label]`, `attachments <id>`, `download-attachments <id> [--out]`, `send --to --subject --body [--attach]`.
 - **tools/gcalendar/** — Google Calendar CRUD via REST API. Commands: `auth`, `calendars`, `events [--calendar] [--limit]`, `add-event --summary --start --end`, `update-event <id>`, `delete-event <id>`.
+- **tools/gdrive/** — Google Drive access via REST API. Commands: `auth`, `files [--query] [--text] [--folder] [--limit]`, `get <id>`, `download <id> [--out] [--mime]`, `open <id>`, `mkdir`, `upload`, `update-content`, `update`, `rename`, `move`, `copy`, `trash`, `untrash`, `delete`.
 - **tools/notion/** — Notion workspace via REST API (`https://api.notion.com/v1`, version `2022-06-28`). Commands: `auth`, `search [--query] [--filter page|database] [--limit]`, `resolve-page <name>`, `resolve-database <name>`, `get-page <id-or-url>`, `get-database <id-or-url>`, `create-page --database-id --properties-json`, `update-page <id-or-url> --properties-json`, `archive-page <id-or-url>`, `query-database <id-or-url> [--filter-json] [--sorts-json] [--limit]`, `query-database-summary --summary-json`, `create-database`, `update-database`, `list-block-children`, `append-block-children --children-json`, `update-block --body-json`, `archive-block`, `create-comment --page-id --text`, `list-comments`, `list-users`, `get-user <id>`.
 - **tools/linkedin/** — Builds LinkedIn Jobs search URLs and opens in browser; **no API calls or scraping**. Commands: `search [keywords] [--location] [--date day|week|month] [--workplace remote|hybrid|onsite] [--type fulltime|parttime|contract|...] [--experience entry|associate|mid|senior|director|executive] [--start] [--open]`, `developer`.
 - **tools/freelancer/** — Freelancer.com job search via REST API. Commands: `auth [--client-credentials]`, `search "keywords" [--limit] [--offset]`, `project <id>`, `open <id-or-url>`.
@@ -40,6 +42,7 @@ Zero npm runtime dependencies — everything uses built-in Node APIs (native `fe
 | Upwork | `UPWORK_CLIENT_ID`, `UPWORK_CLIENT_SECRET` | `UPWORK_CALLBACK_URL` |
 | Gmail | `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` | `GMAIL_CALLBACK_URL`, `GMAIL_SCOPES` |
 | GCalendar | `GCALENDAR_CLIENT_ID`, `GCALENDAR_CLIENT_SECRET` | `GCALENDAR_CALLBACK_URL`, `GCALENDAR_SCOPES` |
+| GDrive | `GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET` | `GDRIVE_CALLBACK_URL`, `GDRIVE_SCOPES` |
 | Notion | `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET` | `NOTION_CALLBACK_URL`, `NOTION_VERSION` |
 | Freelancer | `FREELANCER_CLIENT_ID`, `FREELANCER_CLIENT_SECRET` | `FREELANCER_CALLBACK_URL`, `FREELANCER_SCOPE`, `FREELANCER_ADVANCED_SCOPES`, `FREELANCER_BASE_URL` |
 | LinkedIn | — | — |
@@ -60,6 +63,7 @@ All tools share the same default callback: `http://localhost:3000/callback`.
 - **Freelancer** uses a non-standard `Freelancer-OAuth-V1: <token>` header instead of `Bearer`. It also supports `--client-credentials` (app-only grant, no user interaction, tokens don't expire).
 - **Notion** token exchange uses HTTP Basic Auth (`Authorization: Basic base64(clientId:clientSecret)`). It accepts page/database IDs as raw UUIDs (with or without hyphens) or full Notion URLs — IDs are normalized internally.
 - **Gmail** always requests `access_type=offline` and `prompt=consent` to guarantee a refresh token.
+- **GDrive** uses full Drive scope by default so write commands work. Permanent delete requires `--yes`.
 - **LinkedIn** has no auth at all — it only constructs URLs with hardcoded LinkedIn query-parameter codes for filter values (e.g., `r86400` for "past day", `2` for "remote").
 
 ### Scripts

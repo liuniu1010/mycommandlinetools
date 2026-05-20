@@ -13,7 +13,7 @@ GCALENDAR_CALLBACK_URL=http://localhost:3000/callback
 ```
 
 Create the OAuth client in Google Cloud Console as a web application, enable the Google Calendar API, and add the callback URL above as an authorized redirect URI.
-For step-by-step credential setup, see [../../OAUTH_SETUP.md#google-gmail-and-google-calendar](../../OAUTH_SETUP.md#google-gmail-and-google-calendar).
+For step-by-step credential setup, see [../../OAUTH_SETUP.md#google-gmail-google-calendar-and-google-drive](../../OAUTH_SETUP.md#google-gmail-google-calendar-and-google-drive).
 
 ## Usage
 

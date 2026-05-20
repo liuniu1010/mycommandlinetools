@@ -1,6 +1,6 @@
 ---
 name: personal-cli-assistant
-description: Use this skill when acting as the user's personal assistant through this repository's local command-line tools for Gmail, Outlook, Google Calendar, Notion, Upwork, Freelancer.com, and LinkedIn Jobs. It covers command selection, provider disambiguation, safety confirmation for side effects, and verification habits for this personal Node.js toolset.
+description: Use this skill when acting as the user's personal assistant through this repository's local command-line tools for Gmail, Outlook, Google Calendar, Google Drive, Notion, Upwork, Freelancer.com, and LinkedIn Jobs. It covers command selection, provider disambiguation, safety confirmation for side effects, and verification habits for this personal Node.js toolset.
 ---
 
 # Personal CLI Assistant
@@ -14,6 +14,7 @@ Run commands from the repository root. Use `COMMANDS.md` as the primary command 
 - Gmail: `node tools/gmail/cli.js ...`
 - Outlook: `node tools/outlook/cli.js ...`
 - Google Calendar: `node tools/gcalendar/cli.js ...`
+- Google Drive: `node tools/gdrive/cli.js ...`
 - Notion: `node tools/notion/cli.js ...`
 - Upwork: `node tools/upwork/cli.js ...`
 - Freelancer.com: `node tools/freelancer/cli.js ...`
@@ -28,6 +29,7 @@ Ask a short clarification before acting when provider choice changes the account
 - Email without a provider: ask whether to use Gmail, Outlook, or both.
 - Sending email: always confirm provider, sender/account if visible, recipients, subject, body, and attachments before sending unless the user already supplied all details and explicitly told you to send now.
 - Calendar changes: confirm calendar, date/time with timezone, title, attendees, and whether to create/update/delete before making changes.
+- Google Drive writes: always confirm the exact command intent, target file or folder, local file path when uploading or replacing content, destination folder when moving/copying, and whether delete is trash or permanent before running any write command.
 - Notion writes or archive actions: confirm the target page/database/block and the exact intended change.
 - Browser-opening commands: confirm when the user did not explicitly ask to open a browser.
 
@@ -35,6 +37,7 @@ For read-only requests, reasonable defaults are allowed:
 
 - "Check my email" can mean list recent messages from both Gmail and Outlook if the user did not specify and a combined summary is useful.
 - "What's on my calendar?" can use `primary` and a small limit unless the user specifies a calendar or date range.
+- "Find this in Drive" can use read-only Drive search by file name or indexed content.
 - Job search requests should use read-only search/URL commands first.
 
 ## Safe Command Patterns
@@ -59,6 +62,16 @@ Calendar:
 ```bash
 node tools/gcalendar/cli.js calendars
 node tools/gcalendar/cli.js events --calendar primary --limit 10
+```
+
+Google Drive:
+
+```bash
+node tools/gdrive/cli.js files --query "proposal" --limit 10
+node tools/gdrive/cli.js files --text "resident visa" --limit 10
+node tools/gdrive/cli.js files --folder root --limit 20
+node tools/gdrive/cli.js get <fileId>
+node tools/gdrive/cli.js download <fileId> --out downloads/gdrive
 ```
 
 Notion:
@@ -93,6 +106,16 @@ Treat these as side-effecting and require clear user intent:
 - `node tools/gcalendar/cli.js add-event ...`
 - `node tools/gcalendar/cli.js update-event ...`
 - `node tools/gcalendar/cli.js delete-event ...`
+- `node tools/gdrive/cli.js mkdir ...`
+- `node tools/gdrive/cli.js upload ...`
+- `node tools/gdrive/cli.js update-content ...`
+- `node tools/gdrive/cli.js update ...`
+- `node tools/gdrive/cli.js rename ...`
+- `node tools/gdrive/cli.js move ...`
+- `node tools/gdrive/cli.js copy ...`
+- `node tools/gdrive/cli.js trash ...`
+- `node tools/gdrive/cli.js untrash ...`
+- `node tools/gdrive/cli.js delete ...`
 - `node tools/notion/cli.js create-page ...`
 - `node tools/notion/cli.js update-page ...`
 - `node tools/notion/cli.js archive-page ...`
@@ -103,12 +126,15 @@ Treat these as side-effecting and require clear user intent:
 - Any command with `--open`, plus Upwork/Freelancer `open` and LinkedIn `developer`.
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.
 
+For every Google Drive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Permanent delete must be explicitly confirmed as permanent.
+
 Authentication commands are expected to start a localhost OAuth callback server and may need browser interaction:
 
 ```bash
 node tools/gmail/cli.js auth
 node tools/outlook/cli.js auth
 node tools/gcalendar/cli.js auth
+node tools/gdrive/cli.js auth
 node tools/notion/cli.js auth
 node tools/upwork/cli.js auth
 node tools/freelancer/cli.js auth
@@ -122,6 +148,7 @@ Summarize personal data compactly:
 
 - For email, show sender, subject, local date/time, and a short snippet or action item.
 - For calendar, show local date/time, title, calendar, and conflicts or open windows when relevant.
+- For Google Drive, show file name, file ID, MIME type, modified time, path or parent folder when available, and local download path for downloaded files.
 - For Notion/database output, extract the fields needed for the user's task instead of pasting raw JSON.
 - For job searches, rank or group results by relevance, budget, recency, or fit when the CLI returns enough data.
 
@@ -135,4 +162,4 @@ For repo changes, run:
 npm run verify
 ```
 
-For command availability or routine checks, prefer non-destructive commands such as `help`, `labels`, `calendars`, `events`, `search`, or `list`.
+For command availability or routine checks, prefer non-destructive commands such as `help`, `labels`, `calendars`, `events`, `search`, `files`, or `list`.

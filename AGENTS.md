@@ -7,6 +7,7 @@ This repository is a personal Node.js command-line toolset. Source code lives in
 - `tools/upwork/` for Upwork OAuth, job search, job lookup, and browser open commands.
 - `tools/gmail/` for Gmail OAuth, labels, message reads, attachments, and sending mail.
 - `tools/gcalendar/` for Google Calendar OAuth, calendar listing, event reads, and event CRUD.
+- `tools/gdrive/` for Google Drive OAuth, file search, metadata reads, downloads, exports, uploads, file management, and browser open commands.
 - `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, and browser open commands.
 - `tools/linkedin/` for LinkedIn Jobs search URL generation and browser open commands. It must not scrape LinkedIn or automate a logged-in account.
 
@@ -23,7 +24,7 @@ Run commands from the repository root.
 - `npm run lint` enforces local style rules.
 - `npm run build` copies `tools/` into `dist/` and creates `dist/package.json`.
 
-Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search "node.js" --limit 20`, `node tools/freelancer/cli.js search "java spring boot" --limit 20`, `node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"`, and `node tools/gcalendar/cli.js events --calendar primary`.
+Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search "node.js" --limit 20`, `node tools/freelancer/cli.js search "java spring boot" --limit 20`, `node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"`, `node tools/gcalendar/cli.js events --calendar primary`, and `node tools/gdrive/cli.js files --query "proposal" --limit 20`.
 
 ## Coding Style & Naming Conventions
 

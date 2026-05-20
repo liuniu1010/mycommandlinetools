@@ -21,10 +21,10 @@ The redirect URI registered in the provider console must match the value in
 URI and `.env` value character by character, including protocol, port, path, and
 trailing slash.
 
-## Google: Gmail and Google Calendar
+## Google: Gmail, Google Calendar, and Google Drive
 
-Gmail and Google Calendar can use the same Google Cloud project, but they need
-the relevant APIs enabled and the scopes requested by each CLI.
+Gmail, Google Calendar, and Google Drive can use the same Google Cloud project,
+but they need the relevant APIs enabled and the scopes requested by each CLI.
 
 Official references:
 
@@ -40,6 +40,7 @@ Steps:
 4. Enable the APIs you need:
    - Gmail API for `tools/gmail`.
    - Google Calendar API for `tools/gcalendar`.
+   - Google Drive API for `tools/gdrive`.
 5. Go to "APIs & Services" > "OAuth consent screen".
 6. Configure the consent screen. For personal use, "External" with test users is
    usually enough while the app is unpublished.
@@ -71,11 +72,21 @@ GCALENDAR_CLIENT_SECRET=your_google_oauth_client_secret
 GCALENDAR_CALLBACK_URL=http://localhost:3000/callback
 ```
 
+For Google Drive:
+
+```bash
+GDRIVE_CLIENT_ID=your_google_oauth_client_id
+GDRIVE_CLIENT_SECRET=your_google_oauth_client_secret
+GDRIVE_CALLBACK_URL=http://localhost:3000/callback
+GDRIVE_SCOPES=https://www.googleapis.com/auth/drive
+```
+
 Then authenticate:
 
 ```bash
 node tools/gmail/cli.js auth
 node tools/gcalendar/cli.js auth
+node tools/gdrive/cli.js auth
 ```
 
 Notes:
