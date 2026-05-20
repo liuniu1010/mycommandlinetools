@@ -6,6 +6,8 @@ Personal CLI for building LinkedIn Jobs search URLs and opening them in your bro
 
 LinkedIn job-search APIs are not generally available for personal automation. Official Talent Solutions job APIs are restricted to approved partners and focus on job posting/ATS workflows, not personal job search. This tool therefore does not scrape LinkedIn, automate a logged-in browser, or collect job results.
 
+This tool does not need OAuth credentials. For details, see [../../OAUTH_SETUP.md#linkedin](../../OAUTH_SETUP.md#linkedin).
+
 ## Usage
 
 Print a LinkedIn Jobs search URL:

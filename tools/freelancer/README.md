@@ -15,6 +15,7 @@ FREELANCER_ADVANCED_SCOPES=
 ```
 
 The callback URL must match the redirect URL configured for your Freelancer.com API app.
+For step-by-step credential setup, see [../../OAUTH_SETUP.md#freelancercom](../../OAUTH_SETUP.md#freelancercom).
 
 ## Usage
 

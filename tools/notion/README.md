@@ -14,6 +14,8 @@ redirect URI to the OAuth configuration:
 http://localhost:3000/callback
 ```
 
+For step-by-step credential setup, see [../../OAUTH_SETUP.md#notion](../../OAUTH_SETUP.md#notion).
+
 Create or update `.env` in the repository root:
 
 ```bash

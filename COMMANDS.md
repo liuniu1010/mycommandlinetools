@@ -13,6 +13,8 @@ npm install
 
 Create a root `.env` file for private credentials. Do not commit `.env`.
 
+For step-by-step OAuth credential setup, see [OAUTH_SETUP.md](OAUTH_SETUP.md).
+
 For Upwork:
 
 ```bash

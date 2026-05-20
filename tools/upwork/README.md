@@ -13,6 +13,7 @@ UPWORK_CALLBACK_URL=http://localhost:3000/callback
 ```
 
 The API key must be enabled by Upwork before OAuth will work.
+For step-by-step credential setup, see [../../OAUTH_SETUP.md#upwork](../../OAUTH_SETUP.md#upwork).
 
 ## Usage
 

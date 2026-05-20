@@ -17,6 +17,7 @@ OUTLOOK_SCOPES=offline_access User.Read Mail.ReadWrite Mail.Send
 Create an app registration in Microsoft Entra admin center, add the callback URL
 above as a web redirect URI, and allow the delegated Microsoft Graph
 permissions listed in `OUTLOOK_SCOPES`.
+For step-by-step credential setup, see [../../OAUTH_SETUP.md#microsoft-outlook-mail](../../OAUTH_SETUP.md#microsoft-outlook-mail).
 
 ## Usage
 
