@@ -1,0 +1,7 @@
+interface:
+  display_name: "Personal CLI Assistant"
+  short_description: "Use local CLIs for personal assistant tasks"
+  default_prompt: "Use $personal-cli-assistant to check my recent email and calendar through the local command-line tools."
+
+policy:
+  allow_implicit_invocation: true
