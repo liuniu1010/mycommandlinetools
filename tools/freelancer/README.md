@@ -10,11 +10,12 @@ Create `.env` in the repository root:
 FREELANCER_CLIENT_ID=your_client_id
 FREELANCER_CLIENT_SECRET=your_client_secret
 FREELANCER_CALLBACK_URL=http://localhost:3000/callback
-FREELANCER_SCOPE=basic
+FREELANCER_SCOPE=basic fln:user:email
 FREELANCER_ADVANCED_SCOPES=
 ```
 
 The callback URL must match the redirect URL configured for your Freelancer.com API app.
+Use the minimum scopes needed for your workflow. `basic fln:user:email` lets the CLI save profile metadata when the API permits it; bid submission and account-specific reads may require additional scopes or advanced scopes in your Freelancer app.
 
 ## Usage
 
@@ -115,5 +116,5 @@ node tools/freelancer/cli.js milestones <projectId>
 
 - Tokens stored in `tools/freelancer/.token.json` (mode 0600)
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
-- `bid` (submitting proposals) requires user OAuth, not client credentials
-- `messages`, `notifications`, `bids` require user OAuth for full access
+- `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
+- `messages`, `notifications`, `bids`, and `milestones` require user OAuth for full access

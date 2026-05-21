@@ -90,6 +90,9 @@ node tools/upwork/cli.js search "node.js openai api" --limit 20
 node tools/upwork/cli.js job <jobId>
 node tools/freelancer/cli.js search "java spring boot" --limit 20
 node tools/freelancer/cli.js project <projectId>
+node tools/freelancer/cli.js user <userId>
+node tools/freelancer/cli.js reviews <projectId>
+node tools/freelancer/cli.js contests "logo design" --limit 10
 node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"
 ```
 
@@ -123,6 +126,7 @@ Treat these as side-effecting and require clear user intent:
 - `node tools/notion/cli.js update-block ...`
 - `node tools/notion/cli.js archive-block ...`
 - `node tools/notion/cli.js create-comment ...`
+- `node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"`
 - Any command with `--open`, plus Upwork/Freelancer `open` and LinkedIn `developer`.
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.
 

@@ -211,15 +211,19 @@ Steps:
 http://localhost:3000/callback
 ```
 
-5. Choose the minimum scopes needed. This CLI starts with read-only project
-   search and project lookup; `basic` is the default configured scope.
+5. Choose the minimum scopes needed. This CLI supports project search/detail,
+   profile and user reads, reviews, bid reads/submission, contests, messages,
+   notifications, and milestones. `basic fln:user:email` is the default
+   repository example so account metadata can be saved when the API permits it.
+   Bid submission and account-specific reads may require additional Freelancer
+   scopes or advanced scopes in your app.
 6. Copy the client ID and client secret into `.env`:
 
 ```bash
 FREELANCER_CLIENT_ID=your_client_id
 FREELANCER_CLIENT_SECRET=your_client_secret
 FREELANCER_CALLBACK_URL=http://localhost:3000/callback
-FREELANCER_SCOPE=basic
+FREELANCER_SCOPE=basic fln:user:email
 FREELANCER_ADVANCED_SCOPES=
 ```
 

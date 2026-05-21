@@ -310,7 +310,9 @@ Tool notes:
 - Uses the official Freelancer.com API, not website scraping.
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
-- Starts with read-only project search and project detail commands.
+- Supports read-only project search/detail, profile and user lookup, reviews, bid reads, contests, messages, notifications, and milestones.
+- Supports bid submission as a side-effecting command; confirm proposal details before using it.
+- Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
 
 Configure credentials:
 
@@ -318,6 +320,8 @@ Configure credentials:
 FREELANCER_CLIENT_ID=your_client_id
 FREELANCER_CLIENT_SECRET=your_client_secret
 FREELANCER_CALLBACK_URL=http://localhost:3000/callback
+FREELANCER_SCOPE=basic fln:user:email
+FREELANCER_ADVANCED_SCOPES=
 ```
 
 Authenticate:
@@ -330,6 +334,7 @@ Search active projects:
 
 ```bash
 node tools/freelancer/cli.js search "java spring boot" --limit 20
+node tools/freelancer/cli.js search "backend" --full-description --user-details --location-details
 ```
 
 Fetch one project by ID:
@@ -342,6 +347,30 @@ Open a project in the browser:
 
 ```bash
 node tools/freelancer/cli.js open <projectId-or-url>
+```
+
+Read profile, client, review, bid, and milestone information:
+
+```bash
+node tools/freelancer/cli.js profile
+node tools/freelancer/cli.js user <userId>
+node tools/freelancer/cli.js reviews <projectId>
+node tools/freelancer/cli.js bids [projectId] [--limit 10]
+node tools/freelancer/cli.js milestones <projectId>
+```
+
+Submit a bid:
+
+```bash
+node tools/freelancer/cli.js bid <projectId> --amount 150 --period 7 --description "I can build this"
+```
+
+Search contests and inspect account activity:
+
+```bash
+node tools/freelancer/cli.js contests "logo design" --limit 10
+node tools/freelancer/cli.js messages [--limit 10]
+node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 ```
 
 ## LinkedIn
