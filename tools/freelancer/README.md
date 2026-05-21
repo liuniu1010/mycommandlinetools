@@ -1,6 +1,6 @@
 # Freelancer CLI
 
-Personal CLI for Freelancer.com OAuth and read-only project search through the official API.
+Personal CLI for Freelancer.com via the official OAuth2 API.
 
 ## Setup
 
@@ -15,39 +15,105 @@ FREELANCER_ADVANCED_SCOPES=
 ```
 
 The callback URL must match the redirect URL configured for your Freelancer.com API app.
-For step-by-step credential setup, see [../../OAUTH_SETUP.md#freelancercom](../../OAUTH_SETUP.md#freelancercom).
 
 ## Usage
 
-Authorize with the browser OAuth flow:
+### Auth
 
 ```bash
+# Standard user OAuth flow (opens browser)
 node tools/freelancer/cli.js auth
-```
 
-If your Freelancer app is configured for owner-only desktop access, client credentials may be available:
-
-```bash
+# App-only client credentials (no browser, tokens don't expire)
 node tools/freelancer/cli.js auth --client-credentials
 ```
 
-Search active projects:
+### Search projects
 
 ```bash
-node tools/freelancer/cli.js search "java spring boot" --limit 20
-node tools/freelancer/cli.js search "ai agent" --limit 10 --offset 20
+node tools/freelancer/cli.js search "node.js API" --limit 20
+node tools/freelancer/cli.js search "python ml" --limit 10 --offset 20
+node tools/freelancer/cli.js search "backend" --full-description --user-details
 ```
 
-Read a project by ID:
+Options: `--limit N`, `--offset N`, `--sort FIELD`, `--full-description`, `--compact`, `--user-details`, `--location-details`
+
+### Get a single project
 
 ```bash
 node tools/freelancer/cli.js project <projectId>
 ```
 
-Open a project in the browser:
+### Open project in browser
 
 ```bash
 node tools/freelancer/cli.js open <projectId-or-url>
 ```
 
-OAuth tokens are stored locally in `tools/freelancer/.token.json`. Browser OAuth tokens also include account metadata when the Freelancer API returns it; client-credentials tokens are labelled as app credentials.
+### Your profile
+
+```bash
+node tools/freelancer/cli.js profile
+```
+
+### Look up a user/client
+
+```bash
+node tools/freelancer/cli.js user <userId>
+```
+
+### Reviews for a project
+
+```bash
+node tools/freelancer/cli.js reviews <projectId>
+```
+
+### Your bids
+
+```bash
+# List your recent bids
+node tools/freelancer/cli.js bids [--limit 10]
+
+# List bids on a specific project
+node tools/freelancer/cli.js bids <projectId>
+```
+
+### Submit a bid
+
+```bash
+node tools/freelancer/cli.js bid <projectId> --amount 150 --period 7 --description "I can build this for you"
+```
+
+Options: `--amount N`, `--period <days>`, `--description "text"`, `--milestone-percentage N`
+
+### Search contests
+
+```bash
+node tools/freelancer/cli.js contests "logo design" --limit 10
+node tools/freelancer/cli.js contests --limit 20   # all active contests
+```
+
+### Messages
+
+```bash
+node tools/freelancer/cli.js messages [--limit 10]
+```
+
+### Notifications
+
+```bash
+node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
+```
+
+### Milestones
+
+```bash
+node tools/freelancer/cli.js milestones <projectId>
+```
+
+## Notes
+
+- Tokens stored in `tools/freelancer/.token.json` (mode 0600)
+- Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
+- `bid` (submitting proposals) requires user OAuth, not client credentials
+- `messages`, `notifications`, `bids` require user OAuth for full access

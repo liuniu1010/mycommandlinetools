@@ -237,6 +237,32 @@ async function auth(args) {
   openBrowser(authorizeUrl.toString());
 }
 
+async function apiPost(pathname, body) {
+  const config = requireConfig({ noSecret: true });
+  const accessToken = await getAccessToken();
+  const url = new URL(pathname, config.baseUrl);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Freelancer-OAuth-V1": accessToken,
+      "User-Agent": "personal-toolset freelancer-cli",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = { raw: text };
+  }
+  if (!res.ok || parsed.status === "error") {
+    throw new Error(`API request failed (${res.status}): ${JSON.stringify(parsed, null, 2)}`);
+  }
+  return parsed;
+}
+
 async function apiGet(pathname, params = {}) {
   const config = requireConfig({ noSecret: true });
   const accessToken = await getAccessToken();
@@ -346,6 +372,220 @@ async function project(args) {
   console.log(JSON.stringify(body.result || body, null, 2));
 }
 
+async function profile() {
+  const token = readToken();
+  const accessToken = await getAccessToken();
+  const config = requireConfig({ noSecret: true });
+  const res = await fetch(new URL("/api/users/0.1/self/", config.baseUrl), {
+    headers: {
+      "Freelancer-OAuth-V1": accessToken,
+      "User-Agent": "personal-toolset freelancer-cli",
+    },
+  });
+  const text = await res.text();
+  const body = text ? JSON.parse(text) : {};
+  if (!res.ok || body.status === "error") {
+    throw new Error(`Profile request failed (${res.status}): ${JSON.stringify(body)}`);
+  }
+  const user = body.result || body;
+  console.log(`Name:     ${user.display_name || user.public_name || user.username}`);
+  console.log(`Email:    ${user.email || "(not available)"}`);
+  console.log(`ID:       ${user.id}`);
+  console.log(`Username: ${user.username}`);
+  if (user.location?.country?.name) console.log(`Location: ${user.location.country.name}`);
+  if (user.reputation?.entire_history) {
+    const rep = user.reputation.entire_history;
+    console.log(`Rating:   ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
+  }
+  if (user.status?.payment_verified != null) {
+    console.log(`Payment verified: ${user.status.payment_verified}`);
+  }
+  console.log(`Profile:  ${DEFAULT_BASE_URL}/u/${user.username}`);
+}
+
+async function getUser(args) {
+  const id = args[0];
+  if (!id) throw new Error("Usage: node tools/freelancer/cli.js user <userId>");
+  const body = await apiGet("/api/users/0.1/users/", {
+    userids: [id],
+    avatar: true,
+    reputation: true,
+    employer_reputation: true,
+    status: true,
+    location_details: true,
+    job_details: true,
+  });
+  const users = body.result?.users || {};
+  const user = users[id] || Object.values(users)[0];
+  if (!user) throw new Error(`User ${id} not found`);
+  console.log(`Name:     ${user.display_name || user.public_name || user.username}`);
+  console.log(`ID:       ${user.id}`);
+  console.log(`Username: ${user.username}`);
+  if (user.location?.country?.name) console.log(`Location: ${user.location.country.name}`);
+  if (user.employer_reputation?.entire_history) {
+    const rep = user.employer_reputation.entire_history;
+    console.log(`Employer rating: ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
+  }
+  if (user.reputation?.entire_history) {
+    const rep = user.reputation.entire_history;
+    console.log(`Freelancer rating: ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
+  }
+  if (user.status?.payment_verified != null) {
+    console.log(`Payment verified: ${user.status.payment_verified}`);
+  }
+  const jobs = (user.jobs || []).map((j) => j.name).filter(Boolean).slice(0, 8).join(", ");
+  if (jobs) console.log(`Skills: ${jobs}`);
+  console.log(`Profile: ${DEFAULT_BASE_URL}/u/${user.username}`);
+}
+
+async function reviews(args) {
+  const options = parseOptions(args);
+  const projectId = options._[0];
+  if (!projectId) throw new Error("Usage: node tools/freelancer/cli.js reviews <projectId>");
+  const body = await apiGet(`/api/projects/0.1/reviews/projects/${encodeURIComponent(projectId)}/`);
+  const list = body.result?.reviews || body.result || [];
+  if (!list.length) {
+    console.log("No reviews found for this project.");
+    return;
+  }
+  console.log(`Showing ${list.length} review(s).\n`);
+  list.forEach((r, i) => {
+    console.log(`${i + 1}. Rating: ${r.rating ?? "n/a"}`);
+    if (r.comment) console.log(`   Comment: ${r.comment}`);
+    if (r.date_reviewed) console.log(`   Date: ${new Date(Number(r.date_reviewed) * 1000).toISOString()}`);
+    console.log("");
+  });
+}
+
+async function bids(args) {
+  const options = parseOptions(args);
+  const projectId = options._[0];
+  const params = { limit: Math.min(Number(options.limit || 10), 100), job_details: true };
+  if (projectId) params["project_ids[]"] = projectId;
+  const body = await apiGet("/api/projects/0.1/bids/", params);
+  const list = body.result?.bids || body.result || [];
+  if (!list.length) {
+    console.log("No bids found.");
+    return;
+  }
+  console.log(`Showing ${list.length} bid(s).\n`);
+  list.forEach((b, i) => {
+    console.log(`${i + 1}. Project ID: ${b.project_id}  Bid ID: ${b.id}`);
+    console.log(`   Amount: ${b.amount} ${b.period ? `over ${b.period} days` : ""}`);
+    if (b.description) console.log(`   Description: ${b.description.slice(0, 120)}...`);
+    if (b.award_status) console.log(`   Status: ${b.award_status}`);
+    console.log("");
+  });
+}
+
+async function bid(args) {
+  const options = parseOptions(args);
+  const projectId = options._[0];
+  if (!projectId || !options.amount || !options.period || !options.description) {
+    throw new Error(
+      "Usage: node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description \"text\" [--milestone-percentage <n>]"
+    );
+  }
+  const payload = {
+    project_id: Number(projectId),
+    bidder_id: 0,
+    amount: Number(options.amount),
+    period: Number(options.period),
+    description: options.description,
+    milestone_percentage: options["milestone-percentage"] ? Number(options["milestone-percentage"]) : undefined,
+  };
+  const body = await apiPost("/api/projects/0.1/bids/", payload);
+  const result = body.result || body;
+  console.log(`Bid submitted successfully. Bid ID: ${result.id}`);
+  console.log(JSON.stringify(result, null, 2));
+}
+
+async function contests(args) {
+  const options = parseOptions(args);
+  const query = options._.join(" ").trim();
+  const limit = Math.min(Math.max(Number(options.limit || 10), 1), 100);
+  const offset = Math.max(Number(options.offset || 0), 0);
+  const params = { limit, offset, job_details: true, full_description: options["full-description"] === true };
+  if (query) params.query = query;
+  const body = await apiGet("/api/contests/0.1/contests/active/", params);
+  const list = body.result?.contests || body.result || [];
+  if (!list.length) {
+    console.log("No contests found.");
+    return;
+  }
+  console.log(`Showing ${list.length} contest(s).\n`);
+  list.forEach((c, i) => {
+    console.log(`${i + 1}. ${c.title || "(untitled)"}`);
+    console.log(`   id: ${c.id}`);
+    if (c.prize) console.log(`   prize: ${c.prize} ${c.currency?.code || ""}`);
+    if (c.entry_count != null) console.log(`   entries: ${c.entry_count}`);
+    if (c.time_end) console.log(`   deadline: ${new Date(Number(c.time_end) * 1000).toISOString()}`);
+    const skills = (c.jobs || []).map((j) => j.name).filter(Boolean).slice(0, 6).join(", ");
+    if (skills) console.log(`   skills: ${skills}`);
+    if (c.preview_description) console.log(`   preview: ${c.preview_description}`);
+    const seoUrl = c.seo_url || "";
+    const url = seoUrl.startsWith("http") ? seoUrl : seoUrl ? `${DEFAULT_BASE_URL}/${seoUrl.replace(/^\//, "")}` : `${DEFAULT_BASE_URL}/contest/${c.id}`;
+    console.log(`   url: ${url}`);
+    console.log("");
+  });
+}
+
+async function messages(args) {
+  const options = parseOptions(args);
+  const limit = Math.min(Number(options.limit || 10), 100);
+  const body = await apiGet("/api/messages/0.1/threads/", { limit, context_type: "project" });
+  const threads = body.result?.threads || body.result || [];
+  if (!threads.length) {
+    console.log("No messages found.");
+    return;
+  }
+  console.log(`Showing ${threads.length} thread(s).\n`);
+  threads.forEach((t, i) => {
+    console.log(`${i + 1}. Thread ID: ${t.id}  Context: ${t.context?.id || "n/a"}`);
+    if (t.message_count != null) console.log(`   Messages: ${t.message_count}`);
+    if (t.time_updated) console.log(`   Updated: ${new Date(Number(t.time_updated) * 1000).toISOString()}`);
+    if (t.last_message?.message) console.log(`   Last: ${String(t.last_message.message).slice(0, 100)}`);
+    console.log("");
+  });
+}
+
+async function notifications(args) {
+  const options = parseOptions(args);
+  const limit = Math.min(Number(options.limit || 10), 100);
+  const body = await apiGet("/api/notifications/0.1/notifications/", { limit, unread_only: options["unread-only"] === true });
+  const list = body.result?.notifications || body.result || [];
+  if (!list.length) {
+    console.log("No notifications found.");
+    return;
+  }
+  console.log(`Showing ${list.length} notification(s).\n`);
+  list.forEach((n, i) => {
+    console.log(`${i + 1}. [${n.is_read ? "read" : "UNREAD"}] ${n.description || n.type || "(no description)"}`);
+    if (n.time_created) console.log(`   Time: ${new Date(Number(n.time_created) * 1000).toISOString()}`);
+    console.log("");
+  });
+}
+
+async function milestones(args) {
+  const options = parseOptions(args);
+  const projectId = options._[0];
+  if (!projectId) throw new Error("Usage: node tools/freelancer/cli.js milestones <projectId>");
+  const body = await apiGet("/api/projects/0.1/milestones/", { project_ids: [projectId] });
+  const list = body.result?.milestones || body.result || [];
+  if (!list.length) {
+    console.log("No milestones found for this project.");
+    return;
+  }
+  console.log(`Showing ${list.length} milestone(s).\n`);
+  list.forEach((m, i) => {
+    console.log(`${i + 1}. ${m.description || "(no description)"}`);
+    console.log(`   ID: ${m.id}  Status: ${m.status}`);
+    if (m.amount) console.log(`   Amount: ${m.amount} ${m.currency?.code || ""}`);
+    if (m.time_created) console.log(`   Created: ${new Date(Number(m.time_created) * 1000).toISOString()}`);
+    console.log("");
+  });
+}
+
 function openProject(args) {
   const id = args[0];
   if (!id) throw new Error("Usage: node tools/freelancer/cli.js open <projectId-or-url>");
@@ -377,17 +617,33 @@ function parseOptions(args) {
 function help() {
   console.log(`
 Usage:
-  npm run freelancer:auth
-  node tools/freelancer/cli.js auth --client-credentials
-  npm run freelancer:search -- "keywords" [--limit 10] [--offset 0] [--sort time_updated]
+  node tools/freelancer/cli.js auth [--client-credentials]
+  node tools/freelancer/cli.js search "keywords" [--limit 10] [--offset 0] [--sort time_updated] [--full-description] [--user-details]
   node tools/freelancer/cli.js project <projectId>
   node tools/freelancer/cli.js open <projectId-or-url>
+  node tools/freelancer/cli.js profile
+  node tools/freelancer/cli.js user <userId>
+  node tools/freelancer/cli.js reviews <projectId>
+  node tools/freelancer/cli.js bids [projectId] [--limit 10]
+  node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"
+  node tools/freelancer/cli.js contests ["keywords"] [--limit 10] [--offset 0] [--full-description]
+  node tools/freelancer/cli.js messages [--limit 10]
+  node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
+  node tools/freelancer/cli.js milestones <projectId>
 
 Examples:
-  npm run freelancer:auth
-  npm run freelancer:search -- "java spring boot" --limit 20
-  node tools/freelancer/cli.js project 123456789
-  node tools/freelancer/cli.js open 123456789
+  node tools/freelancer/cli.js auth --client-credentials
+  node tools/freelancer/cli.js search "node.js API" --limit 20 --full-description
+  node tools/freelancer/cli.js project 40458235
+  node tools/freelancer/cli.js profile
+  node tools/freelancer/cli.js user 12345678
+  node tools/freelancer/cli.js reviews 40458235
+  node tools/freelancer/cli.js bids --limit 5
+  node tools/freelancer/cli.js bid 40458235 --amount 150 --period 7 --description "I can build this"
+  node tools/freelancer/cli.js contests "logo design" --limit 10
+  node tools/freelancer/cli.js messages
+  node tools/freelancer/cli.js notifications --unread-only
+  node tools/freelancer/cli.js milestones 40458235
 `);
 }
 
@@ -401,6 +657,15 @@ async function main() {
   if (command === "search") return search(args);
   if (command === "project") return project(args);
   if (command === "open") return openProject(args);
+  if (command === "profile") return profile();
+  if (command === "user") return getUser(args);
+  if (command === "reviews") return reviews(args);
+  if (command === "bids") return bids(args);
+  if (command === "bid") return bid(args);
+  if (command === "contests") return contests(args);
+  if (command === "messages") return messages(args);
+  if (command === "notifications") return notifications(args);
+  if (command === "milestones") return milestones(args);
   throw new Error(`Unknown command: ${command}`);
 }
 
