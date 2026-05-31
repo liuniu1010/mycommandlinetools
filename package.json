@@ -2,7 +2,6 @@
   "name": "personal-toolset",
   "version": "1.0.0",
   "description": "Personal command-line toolset.",
-  "main": "tools/upwork/cli.js",
   "bin": {
     "freelancer-cli": "./tools/freelancer/cli.js",
     "gcalendar-cli": "./tools/gcalendar/cli.js",

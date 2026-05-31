@@ -9,6 +9,8 @@ const DIST = path.join(ROOT, "dist");
 const TOOLS_DIR = path.join(ROOT, "tools");
 
 fs.rmSync(DIST, { recursive: true, force: true });
+fs.mkdirSync(DIST, { recursive: true });
+fs.copyFileSync(path.join(ROOT, "index.js"), path.join(DIST, "index.js"));
 
 for (const entry of fs.readdirSync(TOOLS_DIR, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;

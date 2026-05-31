@@ -16,7 +16,7 @@ function cliFiles() {
     .filter((file) => fs.existsSync(file));
 }
 
-for (const file of cliFiles()) {
+for (const file of [path.join(ROOT, "index.js"), ...cliFiles()]) {
   const result = spawnSync(process.execPath, ["--check", file], { stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status || 1);
 }

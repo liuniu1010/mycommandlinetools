@@ -7,6 +7,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const TOOLS_DIR = path.join(ROOT, "tools");
 const CHECKED_FILES = [
+  "index.js",
   ...fs
     .readdirSync(TOOLS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
