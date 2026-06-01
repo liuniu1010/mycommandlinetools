@@ -242,24 +242,30 @@ Show the authenticated account and default drive:
 
 ```bash
 node tools/onedrive/cli.js account
+node tools/onedrive/cli.js me
 ```
 
 Search files:
 
 ```bash
 node tools/onedrive/cli.js files --query "proposal" --limit 20
+node tools/onedrive/cli.js files --text "resident visa" --limit 20
 ```
 
 List files in a folder:
 
 ```bash
 node tools/onedrive/cli.js files --folder <folderId> --limit 20
+node tools/onedrive/cli.js files --folder root --limit 20 --orderBy lastModifiedDateTime
 ```
+
+`--orderBy` is intended for folder listing, not search.
 
 Read item metadata:
 
 ```bash
 node tools/onedrive/cli.js get <itemId>
+node tools/onedrive/cli.js read <itemId>
 ```
 
 Download a file:
@@ -278,6 +284,7 @@ Create a folder:
 
 ```bash
 node tools/onedrive/cli.js mkdir --name "Receipts" --parent <folderId>
+node tools/onedrive/cli.js create-folder --name "Receipts"
 ```
 
 Upload a file:
@@ -290,13 +297,20 @@ Replace file content:
 
 ```bash
 node tools/onedrive/cli.js update-content <itemId> ./report-v2.pdf
+node tools/onedrive/cli.js replace <itemId> ./report-v2.pdf
 ```
 
 Rename:
 
 ```bash
+node tools/onedrive/cli.js update <itemId> --name "New name.pdf"
 node tools/onedrive/cli.js rename <itemId> --name "New name.pdf"
 ```
+
+Aliases: `me` is the same as `account`, `read` is the same as `get`,
+`create-folder` is the same as `mkdir`, `replace` is the same as
+`update-content`, `rename` is the same as `update`, and `files`, `list`, and
+`search` use the same command handler.
 
 Move, copy, trash, or delete:
 

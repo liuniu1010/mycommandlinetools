@@ -83,9 +83,12 @@ OneDrive:
 node tools/onedrive/cli.js files --query "proposal" --limit 10
 node tools/onedrive/cli.js files --text "resident visa" --limit 10
 node tools/onedrive/cli.js files --folder root --limit 20
+node tools/onedrive/cli.js files --folder root --limit 20 --orderBy lastModifiedDateTime
 node tools/onedrive/cli.js get <itemId>
 node tools/onedrive/cli.js download <itemId> --out downloads/onedrive
 ```
+
+Use OneDrive `--orderBy` only with folder/listing requests, not search. OneDrive aliases include `me` for `account`, `read` for `get`, `create-folder` for `mkdir`, `replace` for `update-content`, `rename` for `update`, and `files`/`list`/`search` for the same file-listing command.
 
 Notion:
 

@@ -31,15 +31,20 @@ Outlook-specific values.
 ```bash
 node tools/onedrive/cli.js auth
 node tools/onedrive/cli.js account
+node tools/onedrive/cli.js me
 node tools/onedrive/cli.js files --query "proposal" --limit 20
 node tools/onedrive/cli.js files --text "resident visa" --limit 20
 node tools/onedrive/cli.js files --folder <folderId> --limit 20
+node tools/onedrive/cli.js files --folder root --limit 20 --orderBy lastModifiedDateTime
 node tools/onedrive/cli.js get <itemId>
+node tools/onedrive/cli.js read <itemId>
 node tools/onedrive/cli.js download <itemId> --out downloads/onedrive
 node tools/onedrive/cli.js open <itemId>
 node tools/onedrive/cli.js mkdir --name "Receipts"
+node tools/onedrive/cli.js create-folder --name "Receipts"
 node tools/onedrive/cli.js upload ./report.pdf --parent <folderId>
 node tools/onedrive/cli.js update-content <itemId> ./report-v2.pdf
+node tools/onedrive/cli.js replace <itemId> ./report-v2.pdf
 node tools/onedrive/cli.js rename <itemId> --name "New name.pdf"
 node tools/onedrive/cli.js move <itemId> --to <folderId>
 node tools/onedrive/cli.js copy <itemId> --name "Copy of report.pdf"
@@ -56,10 +61,16 @@ Some work or school tenants require administrator consent for file permissions.
 If consent or scopes change, update `ONEDRIVE_SCOPES`, remove
 `tools/onedrive/.token.json`, and run `node tools/onedrive/cli.js auth` again.
 
-Use `--query` or `--text` to search the default OneDrive hierarchy. Use
-`--folder root` to list the root folder, or pass a folder item ID to list a
-specific folder. Blob and Office files are downloaded through Microsoft Graph
-`/content`.
+Use `--query` or `--text` to search the default OneDrive hierarchy through the
+Microsoft Graph search API. Use `--folder root` to list the root folder, or
+pass a folder item ID to list a specific folder. `--orderBy` is intended for
+folder listing, not search. Blob and Office files are downloaded through
+Microsoft Graph `/content`.
+
+Aliases: `me` is the same as `account`, `read` is the same as `get`,
+`create-folder` is the same as `mkdir`, `replace` is the same as
+`update-content`, `rename` is the same as `update`, and `files`, `list`, and
+`search` use the same command handler.
 
 Write commands support creating folders, uploading files, replacing file
 content, renaming, moving, copying, and deleting items. OneDrive delete

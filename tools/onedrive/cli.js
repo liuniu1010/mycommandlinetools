@@ -599,19 +599,24 @@ function help() {
   console.log(`
 Usage:
   node tools/onedrive/cli.js auth
-  node tools/onedrive/cli.js account
-  node tools/onedrive/cli.js files [--query "invoice"] [--text "inside file"] [--folder <folderId>] [--limit 10]
-  node tools/onedrive/cli.js get <itemId>
+  node tools/onedrive/cli.js account                                             (alias: me)
+  node tools/onedrive/cli.js files [--query "invoice"] [--folder <folderId>] [--limit 10] [--orderBy lastModifiedDateTime]
+  node tools/onedrive/cli.js get <itemId>                                        (alias: read)
   node tools/onedrive/cli.js download <itemId> [--out downloads/onedrive]
   node tools/onedrive/cli.js open <itemId>
-  node tools/onedrive/cli.js mkdir --name <folderName> [--parent <folderId>]
+  node tools/onedrive/cli.js mkdir --name <folderName> [--parent <folderId>]    (alias: create-folder)
   node tools/onedrive/cli.js upload <localFile> [--name <driveName>] [--parent <folderId>] [--mime <mimeType>]
-  node tools/onedrive/cli.js update-content <itemId> <localFile> [--mime <mimeType>]
-  node tools/onedrive/cli.js update <itemId> [--name <name>]
+  node tools/onedrive/cli.js update-content <itemId> <localFile> [--mime <mimeType>]  (alias: replace)
+  node tools/onedrive/cli.js update <itemId> [--name <name>]                    (alias: rename)
   node tools/onedrive/cli.js move <itemId> --to <folderId> [--name <name>]
   node tools/onedrive/cli.js copy <itemId> [--name <copyName>] [--parent <folderId>]
   node tools/onedrive/cli.js trash <itemId>
   node tools/onedrive/cli.js delete <itemId> --yes
+
+Notes:
+  --query and --text both search via the Microsoft Graph search API (names and content).
+  files, list, search are aliases. --query and --q are aliases.
+  Folders cannot be downloaded directly.
 
 Examples:
   node tools/onedrive/cli.js auth
