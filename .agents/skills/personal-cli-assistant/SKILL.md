@@ -153,6 +153,7 @@ Treat these as side-effecting and require clear user intent:
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.
 
 For every Google Drive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Permanent delete must be explicitly confirmed as permanent.
+For every OneDrive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Delete must be explicitly confirmed.
 
 Authentication commands are expected to start a localhost OAuth callback server and may need browser interaction:
 
