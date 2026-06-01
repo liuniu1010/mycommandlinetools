@@ -60,7 +60,7 @@ node tools/freelancer/cli.js profile
 ### Look up a user/client
 
 ```bash
-node tools/freelancer/cli.js user <userId>
+node tools/freelancer/cli.js user <userId-or-username>
 ```
 
 ### Reviews for a project

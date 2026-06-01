@@ -337,6 +337,94 @@ function printProjects(projects) {
   });
 }
 
+function formatUserLocation(user) {
+  const parts = [
+    user.location?.city || user.location?.vicinity,
+    user.location?.administrative_area,
+    user.location?.country?.name,
+  ].filter(Boolean);
+  return [...new Set(parts)].join(", ");
+}
+
+function profileUrl(user) {
+  return `${DEFAULT_BASE_URL}/u/${user.username}`;
+}
+
+function printUser(user, options = {}) {
+  const email = options.email || user.email;
+  console.log(`Name:     ${user.display_name || user.public_name || user.username}`);
+  console.log(`ID:       ${user.id}`);
+  console.log(`Username: ${user.username}`);
+  if (email) console.log(`Email:    ${email}`);
+  const location = formatUserLocation(user);
+  if (location) console.log(`Location: ${location}`);
+  if (user.hourly_rate != null) console.log(`Hourly rate: ${user.hourly_rate}`);
+  if (user.registration_date) {
+    console.log(`Joined:   ${new Date(Number(user.registration_date) * 1000).toISOString().slice(0, 10)}`);
+  }
+
+  if (user.reputation?.entire_history) {
+    const rep = user.reputation.entire_history;
+    console.log(`Freelancer rating: ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
+    if (rep.complete != null || rep.completion_rate != null) {
+      const completion = rep.completion_rate == null ? "" : `, ${Math.round(Number(rep.completion_rate) * 100)}% completion`;
+      console.log(`Freelancer completed: ${rep.complete ?? "n/a"}${completion}`);
+    }
+  }
+  if (user.employer_reputation?.entire_history) {
+    const rep = user.employer_reputation.entire_history;
+    if (rep.reviews != null || rep.overall != null) {
+      console.log(`Employer rating: ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
+    }
+  }
+
+  if (user.status) {
+    const status = user.status;
+    const verified = [
+      status.payment_verified ? "payment" : "",
+      status.email_verified ? "email" : "",
+      status.phone_verified ? "phone" : "",
+      status.identity_verified ? "identity" : "",
+    ].filter(Boolean);
+    if (verified.length) console.log(`Verified: ${verified.join(", ")}`);
+    if (status.linkedin_connected != null) console.log(`LinkedIn connected: ${status.linkedin_connected}`);
+    if (status.freelancer_verified_user != null) {
+      console.log(`Freelancer verified user: ${status.freelancer_verified_user}`);
+    }
+    if (status.profile_complete != null) console.log(`Profile complete: ${status.profile_complete}`);
+  }
+
+  const jobs = (user.jobs || []).map((j) => j.name).filter(Boolean).slice(0, 12).join(", ");
+  console.log(`Skills returned by API: ${jobs || "(none)"}`);
+
+  if (user.tagline) {
+    console.log(`Tagline returned by API: ${user.tagline}`);
+  } else {
+    console.log("Tagline returned by API: (not returned; check the website profile headline)");
+  }
+  if (user.profile_description) {
+    console.log(`Overview returned by API: ${String(user.profile_description).replace(/\s+/g, " ").trim()}`);
+  } else {
+    console.log("Overview returned by API: (not returned; check the website profile overview)");
+  }
+  console.log(`Profile: ${profileUrl(user)}`);
+}
+
+async function getPublicUser(identifier) {
+  const key = /^\d+$/.test(String(identifier)) ? "users" : "usernames";
+  const body = await apiGet("/api/users/0.1/users/", {
+    [key]: [String(identifier)],
+    avatar: true,
+    reputation: true,
+    employer_reputation: true,
+    status: true,
+    location_details: true,
+    job_details: true,
+  });
+  const users = body.result?.users || {};
+  return users[String(identifier)] || Object.values(users)[0];
+}
+
 async function search(args) {
   const options = parseOptions(args);
   const query = options._.join(" ").trim();
@@ -373,7 +461,6 @@ async function project(args) {
 }
 
 async function profile() {
-  const token = readToken();
   const accessToken = await getAccessToken();
   const config = requireConfig({ noSecret: true });
   const res = await fetch(new URL("/api/users/0.1/self/", config.baseUrl), {
@@ -387,55 +474,17 @@ async function profile() {
   if (!res.ok || body.status === "error") {
     throw new Error(`Profile request failed (${res.status}): ${JSON.stringify(body)}`);
   }
-  const user = body.result || body;
-  console.log(`Name:     ${user.display_name || user.public_name || user.username}`);
-  console.log(`Email:    ${user.email || "(not available)"}`);
-  console.log(`ID:       ${user.id}`);
-  console.log(`Username: ${user.username}`);
-  if (user.location?.country?.name) console.log(`Location: ${user.location.country.name}`);
-  if (user.reputation?.entire_history) {
-    const rep = user.reputation.entire_history;
-    console.log(`Rating:   ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
-  }
-  if (user.status?.payment_verified != null) {
-    console.log(`Payment verified: ${user.status.payment_verified}`);
-  }
-  console.log(`Profile:  ${DEFAULT_BASE_URL}/u/${user.username}`);
+  const self = body.result || body;
+  const publicUser = self.id ? await getPublicUser(self.id) : null;
+  printUser({ ...self, ...(publicUser || {}) }, { email: self.email });
 }
 
 async function getUser(args) {
   const id = args[0];
-  if (!id) throw new Error("Usage: node tools/freelancer/cli.js user <userId>");
-  const body = await apiGet("/api/users/0.1/users/", {
-    userids: [id],
-    avatar: true,
-    reputation: true,
-    employer_reputation: true,
-    status: true,
-    location_details: true,
-    job_details: true,
-  });
-  const users = body.result?.users || {};
-  const user = users[id] || Object.values(users)[0];
+  if (!id) throw new Error("Usage: node tools/freelancer/cli.js user <userId-or-username>");
+  const user = await getPublicUser(id);
   if (!user) throw new Error(`User ${id} not found`);
-  console.log(`Name:     ${user.display_name || user.public_name || user.username}`);
-  console.log(`ID:       ${user.id}`);
-  console.log(`Username: ${user.username}`);
-  if (user.location?.country?.name) console.log(`Location: ${user.location.country.name}`);
-  if (user.employer_reputation?.entire_history) {
-    const rep = user.employer_reputation.entire_history;
-    console.log(`Employer rating: ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
-  }
-  if (user.reputation?.entire_history) {
-    const rep = user.reputation.entire_history;
-    console.log(`Freelancer rating: ${rep.overall ?? "n/a"} (${rep.reviews ?? 0} reviews)`);
-  }
-  if (user.status?.payment_verified != null) {
-    console.log(`Payment verified: ${user.status.payment_verified}`);
-  }
-  const jobs = (user.jobs || []).map((j) => j.name).filter(Boolean).slice(0, 8).join(", ");
-  if (jobs) console.log(`Skills: ${jobs}`);
-  console.log(`Profile: ${DEFAULT_BASE_URL}/u/${user.username}`);
+  printUser(user);
 }
 
 async function reviews(args) {
@@ -622,7 +671,7 @@ Usage:
   node tools/freelancer/cli.js project <projectId>
   node tools/freelancer/cli.js open <projectId-or-url>
   node tools/freelancer/cli.js profile
-  node tools/freelancer/cli.js user <userId>
+  node tools/freelancer/cli.js user <userId-or-username>
   node tools/freelancer/cli.js reviews <projectId>
   node tools/freelancer/cli.js bids [projectId] [--limit 10]
   node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"
@@ -637,6 +686,7 @@ Examples:
   node tools/freelancer/cli.js project 40458235
   node tools/freelancer/cli.js profile
   node tools/freelancer/cli.js user 12345678
+  node tools/freelancer/cli.js user liuniu
   node tools/freelancer/cli.js reviews 40458235
   node tools/freelancer/cli.js bids --limit 5
   node tools/freelancer/cli.js bid 40458235 --amount 150 --period 7 --description "I can build this"

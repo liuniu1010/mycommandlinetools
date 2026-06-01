@@ -27,6 +27,7 @@ Use the local CLIs instead of external app connectors when the user is clearly w
 
 Ask a short clarification before acting when provider choice changes the account or side effects:
 
+- Any write, mutation, send, submit, update, create, upload, move, copy, delete, archive, bid, browser-opening, or other side-effecting action in any local tool must be confirmed by the user before execution. The confirmation must name the exact operation, target account/provider when relevant, target object or path, and important payload fields. Do not infer permission from prior discussion unless the user explicitly requested that exact action in the current turn.
 - Email without a provider: ask whether to use Gmail, Outlook, or both.
 - Sending email: always confirm provider, sender/account if visible, recipients, subject, body, and attachments before sending unless the user already supplied all details and explicitly told you to send now.
 - Calendar changes: confirm calendar, date/time with timezone, title, attendees, and whether to create/update/delete before making changes.
@@ -116,7 +117,7 @@ LinkedIn must only generate or open LinkedIn Jobs URLs. Do not scrape LinkedIn, 
 
 ## Side-Effect Commands
 
-Treat these as side-effecting and require clear user intent:
+Treat these as side-effecting and require explicit user permission before execution. This list is illustrative, not exhaustive; if a command can change remote state, local files outside deliberate read-only inspection, account data, marketplace data, messages, calendar events, browser state, or submitted content, ask first.
 
 - `node tools/gmail/cli.js send ...`
 - `node tools/outlook/cli.js send ...`
