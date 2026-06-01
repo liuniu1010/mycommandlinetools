@@ -8,6 +8,7 @@
     "gdrive-cli": "./tools/gdrive/cli.js",
     "linkedin-cli": "./tools/linkedin/cli.js",
     "notion-cli": "./tools/notion/cli.js",
+    "onedrive-cli": "./tools/onedrive/cli.js",
     "outlook-cli": "./tools/outlook/cli.js",
     "upwork-cli": "./tools/upwork/cli.js",
     "gmail-cli": "./tools/gmail/cli.js"

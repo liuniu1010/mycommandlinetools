@@ -8,10 +8,13 @@ This repository is a personal Node.js command-line toolset. Source code lives in
 - `tools/gmail/` for Gmail OAuth, labels, message reads, attachments, and sending mail.
 - `tools/gcalendar/` for Google Calendar OAuth, calendar listing, event reads, and event CRUD.
 - `tools/gdrive/` for Google Drive OAuth, file search, metadata reads, downloads, exports, uploads, file management, and browser open commands.
+- `tools/onedrive/` for OneDrive OAuth through Microsoft Graph, account reads, file search, metadata reads, downloads, uploads, file management, and browser open commands.
 - `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, user/profile/review reads, bid and milestone reads, bid submission, contests, messages, notifications, and browser open commands.
 - `tools/linkedin/` for LinkedIn Jobs search URL generation and browser open commands. It must not scrape LinkedIn or automate a logged-in account.
 
 Each tool has a local `README.md`. Root-level command examples are documented in `COMMANDS.md`. Build and verification helpers live in `scripts/`. Generated output goes to `dist/`; downloaded Gmail attachments commonly go to `downloads/`. Do not edit generated or downloaded output by hand.
+
+Assistant-specific files are owned by their matching CLI. Claude Code should update only Claude-related files such as `CLAUDE.md` and `.claude/`. Codex CLI should update only Codex-related files such as `AGENTS.md`, `.agents/`, and `.codex/`. Do not update another assistant CLI's files unless the user explicitly asks for that specific file.
 
 ## Build, Test, and Development Commands
 
@@ -24,7 +27,7 @@ Run commands from the repository root.
 - `npm run lint` enforces local style rules.
 - `npm run build` copies `tools/` into `dist/` and creates `dist/package.json`.
 
-Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search "node.js" --limit 20`, `node tools/freelancer/cli.js search "java spring boot" --limit 20`, `node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"`, `node tools/gcalendar/cli.js events --calendar primary`, and `node tools/gdrive/cli.js files --query "proposal" --limit 20`.
+Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search "node.js" --limit 20`, `node tools/freelancer/cli.js search "java spring boot" --limit 20`, `node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"`, `node tools/gcalendar/cli.js events --calendar primary`, `node tools/gdrive/cli.js files --query "proposal" --limit 20`, and `node tools/onedrive/cli.js files --query "proposal" --limit 20`.
 
 ## Coding Style & Naming Conventions
 

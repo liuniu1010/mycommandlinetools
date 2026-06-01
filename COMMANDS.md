@@ -201,6 +201,112 @@ node tools/gdrive/cli.js untrash <fileId>
 node tools/gdrive/cli.js delete <fileId> --yes
 ```
 
+## OneDrive
+
+Implementation:
+
+```text
+tools/onedrive/cli.js
+```
+
+Tool notes:
+
+- Requires a Microsoft Entra app registration with Microsoft Graph delegated
+  permissions.
+- Uses the root `.env` file.
+- Saves OAuth tokens locally to `tools/onedrive/.token.json`, including account
+  and default drive metadata when available.
+- Uses the `/common` Microsoft identity endpoint, so one tool can support
+  personal Microsoft accounts and work or school OneDrive accounts when the app
+  registration allows them.
+- Uses full delegated file access by default so write commands can work.
+- Supports folder creation, upload, content replacement, metadata updates,
+  move, copy, trash/delete, and browser opening.
+
+Configure credentials:
+
+```bash
+ONEDRIVE_CLIENT_ID=your_microsoft_oauth_client_id
+ONEDRIVE_CLIENT_SECRET=your_microsoft_oauth_client_secret
+ONEDRIVE_CALLBACK_URL=http://localhost:3000/callback
+ONEDRIVE_SCOPES=offline_access User.Read Files.ReadWrite.All
+```
+
+Authenticate with OneDrive:
+
+```bash
+node tools/onedrive/cli.js auth
+```
+
+Show the authenticated account and default drive:
+
+```bash
+node tools/onedrive/cli.js account
+```
+
+Search files:
+
+```bash
+node tools/onedrive/cli.js files --query "proposal" --limit 20
+```
+
+List files in a folder:
+
+```bash
+node tools/onedrive/cli.js files --folder <folderId> --limit 20
+```
+
+Read item metadata:
+
+```bash
+node tools/onedrive/cli.js get <itemId>
+```
+
+Download a file:
+
+```bash
+node tools/onedrive/cli.js download <itemId> --out downloads/onedrive
+```
+
+Open an item in the browser:
+
+```bash
+node tools/onedrive/cli.js open <itemId>
+```
+
+Create a folder:
+
+```bash
+node tools/onedrive/cli.js mkdir --name "Receipts" --parent <folderId>
+```
+
+Upload a file:
+
+```bash
+node tools/onedrive/cli.js upload ./report.pdf --parent <folderId>
+```
+
+Replace file content:
+
+```bash
+node tools/onedrive/cli.js update-content <itemId> ./report-v2.pdf
+```
+
+Rename:
+
+```bash
+node tools/onedrive/cli.js rename <itemId> --name "New name.pdf"
+```
+
+Move, copy, trash, or delete:
+
+```bash
+node tools/onedrive/cli.js move <itemId> --to <folderId>
+node tools/onedrive/cli.js copy <itemId> --name "Copy of report.pdf"
+node tools/onedrive/cli.js trash <itemId>
+node tools/onedrive/cli.js delete <itemId> --yes
+```
+
 ## Notion
 
 Implementation:

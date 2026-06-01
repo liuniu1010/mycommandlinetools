@@ -27,6 +27,10 @@ const tools = {
     command: "notion-cli",
     path: path.join(__dirname, "tools", "notion", "cli.js"),
   },
+  onedrive: {
+    command: "onedrive-cli",
+    path: path.join(__dirname, "tools", "onedrive", "cli.js"),
+  },
   outlook: {
     command: "outlook-cli",
     path: path.join(__dirname, "tools", "outlook", "cli.js"),

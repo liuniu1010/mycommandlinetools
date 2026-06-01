@@ -1,6 +1,6 @@
 ---
 name: personal-cli-assistant
-description: Use this skill when acting as the user's personal assistant through this repository's local command-line tools for Gmail, Outlook, Google Calendar, Google Drive, Notion, Upwork, Freelancer.com, and LinkedIn Jobs. It covers command selection, provider disambiguation, safety confirmation for side effects, and verification habits for this personal Node.js toolset.
+description: Use this skill when acting as the user's personal assistant through this repository's local command-line tools for Gmail, Outlook, Google Calendar, Google Drive, OneDrive, Notion, Upwork, Freelancer.com, and LinkedIn Jobs. It covers command selection, provider disambiguation, safety confirmation for side effects, and verification habits for this personal Node.js toolset.
 ---
 
 # Personal CLI Assistant
@@ -15,6 +15,7 @@ Run commands from the repository root. Use `COMMANDS.md` as the primary command 
 - Outlook: `node tools/outlook/cli.js ...`
 - Google Calendar: `node tools/gcalendar/cli.js ...`
 - Google Drive: `node tools/gdrive/cli.js ...`
+- OneDrive: `node tools/onedrive/cli.js ...`
 - Notion: `node tools/notion/cli.js ...`
 - Upwork: `node tools/upwork/cli.js ...`
 - Freelancer.com: `node tools/freelancer/cli.js ...`
@@ -30,6 +31,7 @@ Ask a short clarification before acting when provider choice changes the account
 - Sending email: always confirm provider, sender/account if visible, recipients, subject, body, and attachments before sending unless the user already supplied all details and explicitly told you to send now.
 - Calendar changes: confirm calendar, date/time with timezone, title, attendees, and whether to create/update/delete before making changes.
 - Google Drive writes: always confirm the exact command intent, target file or folder, local file path when uploading or replacing content, destination folder when moving/copying, and whether delete is trash or permanent before running any write command.
+- OneDrive writes: always confirm the exact command intent, target file or folder, local file path when uploading or replacing content, destination folder when moving/copying, and delete intent before running any write command.
 - Notion writes or archive actions: confirm the target page/database/block and the exact intended change.
 - Browser-opening commands: confirm when the user did not explicitly ask to open a browser.
 
@@ -38,6 +40,7 @@ For read-only requests, reasonable defaults are allowed:
 - "Check my email" can mean list recent messages from both Gmail and Outlook if the user did not specify and a combined summary is useful.
 - "What's on my calendar?" can use `primary` and a small limit unless the user specifies a calendar or date range.
 - "Find this in Drive" can use read-only Drive search by file name or indexed content.
+- "Find this in OneDrive" can use read-only OneDrive search by file name or indexed content.
 - Job search requests should use read-only search/URL commands first.
 
 ## Safe Command Patterns
@@ -72,6 +75,16 @@ node tools/gdrive/cli.js files --text "resident visa" --limit 10
 node tools/gdrive/cli.js files --folder root --limit 20
 node tools/gdrive/cli.js get <fileId>
 node tools/gdrive/cli.js download <fileId> --out downloads/gdrive
+```
+
+OneDrive:
+
+```bash
+node tools/onedrive/cli.js files --query "proposal" --limit 10
+node tools/onedrive/cli.js files --text "resident visa" --limit 10
+node tools/onedrive/cli.js files --folder root --limit 20
+node tools/onedrive/cli.js get <itemId>
+node tools/onedrive/cli.js download <itemId> --out downloads/onedrive
 ```
 
 Notion:
@@ -119,6 +132,15 @@ Treat these as side-effecting and require clear user intent:
 - `node tools/gdrive/cli.js trash ...`
 - `node tools/gdrive/cli.js untrash ...`
 - `node tools/gdrive/cli.js delete ...`
+- `node tools/onedrive/cli.js mkdir ...`
+- `node tools/onedrive/cli.js upload ...`
+- `node tools/onedrive/cli.js update-content ...`
+- `node tools/onedrive/cli.js update ...`
+- `node tools/onedrive/cli.js rename ...`
+- `node tools/onedrive/cli.js move ...`
+- `node tools/onedrive/cli.js copy ...`
+- `node tools/onedrive/cli.js trash ...`
+- `node tools/onedrive/cli.js delete ...`
 - `node tools/notion/cli.js create-page ...`
 - `node tools/notion/cli.js update-page ...`
 - `node tools/notion/cli.js archive-page ...`
@@ -139,6 +161,7 @@ node tools/gmail/cli.js auth
 node tools/outlook/cli.js auth
 node tools/gcalendar/cli.js auth
 node tools/gdrive/cli.js auth
+node tools/onedrive/cli.js auth
 node tools/notion/cli.js auth
 node tools/upwork/cli.js auth
 node tools/freelancer/cli.js auth
@@ -153,6 +176,7 @@ Summarize personal data compactly:
 - For email, show sender, subject, local date/time, and a short snippet or action item.
 - For calendar, show local date/time, title, calendar, and conflicts or open windows when relevant.
 - For Google Drive, show file name, file ID, MIME type, modified time, path or parent folder when available, and local download path for downloaded files.
+- For OneDrive, show item name, item ID, type, MIME type when available, modified time, path or parent folder when available, and local download path for downloaded files.
 - For Notion/database output, extract the fields needed for the user's task instead of pasting raw JSON.
 - For job searches, rank or group results by relevance, budget, recency, or fit when the CLI returns enough data.
 

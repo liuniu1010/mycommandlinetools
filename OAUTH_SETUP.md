@@ -151,6 +151,62 @@ Then authenticate:
 node tools/outlook/cli.js auth
 ```
 
+## Microsoft: OneDrive
+
+OneDrive uses a Microsoft Entra app registration and Microsoft Graph delegated
+permissions. The same tool can support personal Microsoft accounts and work or
+school OneDrive accounts when the app registration's supported account type
+allows them.
+
+Official references:
+
+- https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app
+- https://learn.microsoft.com/en-us/entra/identity-platform/reply-url
+- https://learn.microsoft.com/en-us/graph/api/resources/driveitem
+
+Steps:
+
+1. Open Microsoft Entra admin center: https://entra.microsoft.com/
+2. Go to "Identity" > "Applications" > "App registrations".
+3. Create a new registration.
+4. Choose the supported account type that matches your OneDrive use. To support
+   both personal and business accounts, include personal Microsoft accounts.
+5. Add a "Web" redirect URI:
+
+```text
+http://localhost:3000/callback
+```
+
+6. After registration, copy the "Application (client) ID" into `.env`.
+7. Go to "Certificates & secrets" > "Client secrets".
+8. Create a new client secret and copy the secret value immediately.
+9. Go to "API permissions" > "Add a permission" > "Microsoft Graph" >
+   "Delegated permissions".
+10. Add the permissions used by this CLI:
+
+```text
+offline_access
+User.Read
+Files.ReadWrite.All
+```
+
+11. If your tenant requires admin consent, grant consent or ask an admin to do
+    so.
+12. Add the credentials to `.env`:
+
+```bash
+ONEDRIVE_CLIENT_ID=your_microsoft_oauth_client_id
+ONEDRIVE_CLIENT_SECRET=your_microsoft_oauth_client_secret
+ONEDRIVE_CALLBACK_URL=http://localhost:3000/callback
+ONEDRIVE_SCOPES=offline_access User.Read Files.ReadWrite.All
+```
+
+Then authenticate:
+
+```bash
+node tools/onedrive/cli.js auth
+```
+
 ## Upwork
 
 Upwork requires an OAuth 2.0 API key for each application. Upwork may require
