@@ -17,6 +17,7 @@ const DRIVE_UPLOAD_ENDPOINT = "https://www.googleapis.com/upload/drive/v3";
 const DEFAULT_CALLBACK_URL = "http://localhost:3000/callback";
 const DEFAULT_SCOPES = ["https://www.googleapis.com/auth/drive"];
 const GOOGLE_DOC_MIME_PREFIX = "application/vnd.google-apps.";
+const SHORTCUT_MIME_TYPE = "application/vnd.google-apps.shortcut";
 const FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const DEFAULT_EXPORTS = {
   "application/vnd.google-apps.document": {
@@ -356,6 +357,7 @@ function fileFields() {
     "webContentLink",
     "parents",
     "capabilities/canDownload",
+    "shortcutDetails(targetId,targetMimeType)",
   ].join(",");
 }
 
@@ -652,7 +654,20 @@ async function download(args) {
     fields: fileFields(),
     supportsAllDrives: "true",
   });
-  const file = await drive(`/files/${encodeURIComponent(fileId)}?${metadataParams.toString()}`);
+  const requestedFile = await drive(`/files/${encodeURIComponent(fileId)}?${metadataParams.toString()}`);
+  let file = requestedFile;
+  let downloadFileId = fileId;
+  if (requestedFile.mimeType === SHORTCUT_MIME_TYPE) {
+    const targetId = requestedFile.shortcutDetails?.targetId;
+    if (!targetId) {
+      throw new Error(`Shortcut has no target file ID: ${requestedFile.name || fileId}`);
+    }
+    file = await drive(`/files/${encodeURIComponent(targetId)}?${metadataParams.toString()}`);
+    downloadFileId = targetId;
+    console.log(
+      `Resolved shortcut ${requestedFile.name || fileId} (${requestedFile.id}) to ${file.name || targetId} (${targetId})`
+    );
+  }
   if (file.capabilities && file.capabilities.canDownload === false) {
     throw new Error(`File cannot be downloaded: ${file.name || fileId}`);
   }
@@ -665,14 +680,14 @@ async function download(args) {
   if (file.mimeType && file.mimeType.startsWith(GOOGLE_DOC_MIME_PREFIX)) {
     const exportInfo = exportInfoFor(file.mimeType, options.mime);
     const params = new URLSearchParams({ mimeType: exportInfo.mime });
-    data = await driveBinary(`/files/${encodeURIComponent(fileId)}/export?${params.toString()}`);
+    data = await driveBinary(`/files/${encodeURIComponent(downloadFileId)}/export?${params.toString()}`);
     filename = filenameWithExtension(file.name || fileId, exportInfo.ext);
   } else {
     const params = new URLSearchParams({
       alt: "media",
       supportsAllDrives: "true",
     });
-    data = await driveBinary(`/files/${encodeURIComponent(fileId)}?${params.toString()}`);
+    data = await driveBinary(`/files/${encodeURIComponent(downloadFileId)}?${params.toString()}`);
     filename = safeFilename(file.name || fileId);
   }
 

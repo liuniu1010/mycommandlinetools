@@ -42,6 +42,6 @@ OAuth tokens are stored locally in `tools/gdrive/.token.json`. The token file al
 
 The default scope is full Drive access so write commands can work. If you previously authorized with `drive.readonly`, update `GDRIVE_SCOPES`, remove `tools/gdrive/.token.json`, and run `node tools/gdrive/cli.js auth` again.
 
-Use `--query` to search file names and `--text` to search indexed file contents. Blob files are downloaded with Drive `files.get` and `alt=media`; Google Docs, Sheets, Slides, and Drawings are exported with Drive `files.export`.
+Use `--query` to search file names and `--text` to search indexed file contents. Blob files are downloaded with Drive `files.get` and `alt=media`; Google Docs, Sheets, Slides, and Drawings are exported with Drive `files.export`. When downloading a Drive shortcut, the CLI resolves the shortcut target and downloads or exports the original target file.
 
 Write commands support creating folders, uploading files, replacing file content, updating metadata, moving files, copying files, trashing/untrashing files, and permanent delete. Permanent delete requires `--yes`.

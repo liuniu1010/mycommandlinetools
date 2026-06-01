@@ -112,7 +112,7 @@ Tool notes:
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/gdrive/.token.json`, including account metadata when available.
 - Uses the full Drive scope by default so write commands can work.
-- Downloads blob files and exports Google Docs, Sheets, Slides, and Drawings.
+- Downloads blob files, exports Google Docs, Sheets, Slides, and Drawings, and resolves Drive shortcuts to the original target file before downloading.
 - Supports folder creation, upload, content replacement, metadata updates, move, copy, trash, untrash, and permanent delete.
 
 Configure credentials:
