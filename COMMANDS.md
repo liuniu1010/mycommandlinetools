@@ -430,7 +430,7 @@ Tool notes:
 - Uses the official Freelancer.com API, not website scraping.
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
-- Supports read-only project search/detail, profile and user lookup, reviews, bid reads, contests, messages, project messages, milestone payment reads, and milestone request reads.
+- Supports read-only project search/detail, profile and user lookup, portfolio reads, reviews, bid reads, contests, services, messages, project messages, milestone payment reads, and milestone request reads.
 - Implements notifications, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable.
 - Supports bid submission and milestone payment request submission as side-effecting commands; confirm proposal or milestone details before using them.
 - Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
@@ -475,6 +475,7 @@ Read profile, client, review, bid, and milestone information:
 ```bash
 node tools/freelancer/cli.js profile
 node tools/freelancer/cli.js user <userId>
+node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]
 node tools/freelancer/cli.js reviews <projectId>
 node tools/freelancer/cli.js bids [projectId] [--limit 10]
 node tools/freelancer/cli.js milestones <projectId>
@@ -496,10 +497,15 @@ Search contests and inspect account activity:
 
 ```bash
 node tools/freelancer/cli.js contests "logo design" --limit 10
+node tools/freelancer/cli.js services [serviceId ...] [--owner <userId>] [--limit 10] [--offset 0] [--reviews] [--json]
 node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
 node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
 node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 ```
+
+`services` lists your own Freelancer Services by default, lists another user's services with `--owner`, or fetches specific service IDs. Service creation is not implemented because the checked official SDK/docs do not expose a safe creation payload.
+
+`portfolios` lists portfolio items for your account by default or for another user ID. Portfolio creation/edit/delete is not implemented because the official SDK exposes retrieval only, and write probes returned `405` or `404`; use the Freelancer website for portfolio writes.
 
 `project-messages` uses Freelancer's project-scoped messages API. It is not a dedicated Project Public Clarification Board API; Freelancer's public documentation and the probed API endpoints did not expose one.
 

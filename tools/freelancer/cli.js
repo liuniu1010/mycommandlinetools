@@ -337,6 +337,50 @@ function printProjects(projects) {
   });
 }
 
+function printServices(services) {
+  console.log(`Showing ${services.length} service(s).\n`);
+  services.forEach((service, index) => {
+    const currency = service.currency?.code || "";
+    console.log(`${index + 1}. ${service.title || "(untitled service)"}`);
+    console.log(`   id: ${service.id}`);
+    if (service.status || service.sub_status) {
+      console.log(`   status: ${[service.status, service.sub_status].filter(Boolean).join(" | ")}`);
+    }
+    if (service.base_cost != null || service.base_duration != null) {
+      const cost = service.base_cost == null ? "" : `${service.base_cost} ${currency}`.trim();
+      const duration = service.base_duration == null ? "" : `${service.base_duration} day(s)`;
+      console.log(`   base: ${[cost, duration].filter(Boolean).join(" over ")}`);
+    }
+    const jobs = (service.jobs || []).map((job) => job.name).filter(Boolean).slice(0, 8).join(", ");
+    if (jobs) console.log(`   skills: ${jobs}`);
+    if (service.description) {
+      console.log(`   preview: ${String(service.description).replace(/\s+/g, " ").trim().slice(0, 180)}`);
+    }
+    console.log(`   url: ${DEFAULT_BASE_URL}/services/${service.id}`);
+    console.log("");
+  });
+}
+
+function printPortfolios(portfolios) {
+  console.log(`Showing ${portfolios.length} portfolio item(s).\n`);
+  portfolios.forEach((portfolio, index) => {
+    console.log(`${index + 1}. ${portfolio.title || "(untitled portfolio)"}`);
+    console.log(`   id: ${portfolio.id}`);
+    if (portfolio.content_type) console.log(`   type: ${portfolio.content_type}`);
+    if (portfolio.featured != null) console.log(`   featured: ${portfolio.featured}`);
+    if (portfolio.last_modify_date) {
+      console.log(`   modified: ${new Date(Number(portfolio.last_modify_date) * 1000).toISOString()}`);
+    }
+    if (portfolio.description) {
+      console.log(`   description: ${String(portfolio.description).replace(/\s+/g, " ").trim()}`);
+    }
+    const fileNames = (portfolio.files || []).map((file) => file.filename).filter(Boolean);
+    if (fileNames.length) console.log(`   files: ${fileNames.join(", ")}`);
+    if (portfolio.jobs?.length) console.log(`   skill ids: ${portfolio.jobs.join(", ")}`);
+    console.log("");
+  });
+}
+
 function formatUserLocation(user) {
   const parts = [
     user.location?.city || user.location?.vicinity,
@@ -584,6 +628,60 @@ async function contests(args) {
   });
 }
 
+async function services(args) {
+  const options = parseOptions(args);
+  const params = {
+    limit: Math.min(Math.max(Number(options.limit || 10), 1), 100),
+    job_details: true,
+    review_details: options.reviews === true,
+  };
+  if (options.offset) params.offset = Math.max(Number(options.offset), 0);
+  if (options._.length) {
+    params.services = options._;
+  } else if (options.owner) {
+    params.owners = [options.owner];
+  } else {
+    const savedToken = readToken();
+    if (!savedToken.account_id) {
+      throw new Error("Could not determine owner ID. Pass service IDs or --owner <userId>.");
+    }
+    params.owners = [savedToken.account_id];
+  }
+  const body = await apiGet("/api/projects/0.1/services/", params);
+  const list = body.result?.services || body.result || [];
+  if (!list || !list.length) {
+    console.log("No services found.");
+    return;
+  }
+  if (options.json) {
+    console.log(JSON.stringify(list, null, 2));
+    return;
+  }
+  printServices(list);
+}
+
+async function portfolios(args) {
+  const options = parseOptions(args);
+  const userId = options.user || options._[0] || readToken().account_id;
+  if (!userId) throw new Error("Usage: node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]");
+  const body = await apiGet("/api/users/0.1/portfolios/", {
+    users: [userId],
+    limit: Math.min(Math.max(Number(options.limit || 10), 1), 100),
+    offset: Math.max(Number(options.offset || 0), 0),
+  });
+  const portfoliosByUser = body.result?.portfolios || {};
+  const list = portfoliosByUser[String(userId)] || portfoliosByUser[userId] || [];
+  if (!list.length) {
+    console.log("No portfolio items found.");
+    return;
+  }
+  if (options.json) {
+    console.log(JSON.stringify(list, null, 2));
+    return;
+  }
+  printPortfolios(list);
+}
+
 async function messages(args) {
   const options = parseOptions(args);
   const limit = Math.min(Number(options.limit || 10), 100);
@@ -786,6 +884,8 @@ Usage:
   node tools/freelancer/cli.js bids [projectId] [--limit 10]
   node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"
   node tools/freelancer/cli.js contests ["keywords"] [--limit 10] [--offset 0] [--full-description]
+  node tools/freelancer/cli.js services [serviceId ...] [--owner <userId>] [--limit 10] [--offset 0] [--reviews] [--json]
+  node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]
   node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
   node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
   node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
@@ -804,6 +904,9 @@ Examples:
   node tools/freelancer/cli.js bids --limit 5
   node tools/freelancer/cli.js bid 40458235 --amount 150 --period 7 --description "I can build this"
   node tools/freelancer/cli.js contests "logo design" --limit 10
+  node tools/freelancer/cli.js services
+  node tools/freelancer/cli.js services 1 --json
+  node tools/freelancer/cli.js portfolios
   node tools/freelancer/cli.js messages
   node tools/freelancer/cli.js project-messages 40458235
   node tools/freelancer/cli.js notifications --unread-only
@@ -829,6 +932,8 @@ async function main() {
   if (command === "bids") return bids(args);
   if (command === "bid") return bid(args);
   if (command === "contests") return contests(args);
+  if (command === "services") return services(args);
+  if (command === "portfolios") return portfolios(args);
   if (command === "messages") return messages(args);
   if (command === "project-messages") return projectMessages(args);
   if (command === "notifications") return notifications(args);

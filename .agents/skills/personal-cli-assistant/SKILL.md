@@ -108,6 +108,7 @@ node tools/upwork/cli.js job <jobId>
 node tools/freelancer/cli.js search "java spring boot" --limit 20
 node tools/freelancer/cli.js project <projectId>
 node tools/freelancer/cli.js user <userId>
+node tools/freelancer/cli.js portfolios [userId] [--limit 10]
 node tools/freelancer/cli.js reviews <projectId>
 node tools/freelancer/cli.js bids [projectId] [--limit 10]
 node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
@@ -115,6 +116,7 @@ node tools/freelancer/cli.js project-messages <projectId> [--limit 10]
 node tools/freelancer/cli.js milestones <projectId>
 node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10]
 node tools/freelancer/cli.js contests "logo design" --limit 10
+node tools/freelancer/cli.js services [--limit 10]
 node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"
 ```
 

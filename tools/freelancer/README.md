@@ -94,6 +94,36 @@ node tools/freelancer/cli.js contests "logo design" --limit 10
 node tools/freelancer/cli.js contests --limit 20   # all active contests
 ```
 
+### Services
+
+```bash
+# List your own Freelancer Services
+node tools/freelancer/cli.js services [--limit 10] [--offset 0]
+
+# List services for another user
+node tools/freelancer/cli.js services --owner <userId> [--limit 10]
+
+# Fetch specific service IDs
+node tools/freelancer/cli.js services <serviceId> [serviceId ...] [--json]
+```
+
+Services are read-only in this CLI. Freelancer exposes a confirmed service read endpoint under `/api/projects/0.1/services/`, but the public SDK/docs checked here do not expose a safe creation payload for publishing Services.
+
+### Portfolios
+
+```bash
+# List your own portfolio items
+node tools/freelancer/cli.js portfolios [--limit 10] [--offset 0]
+
+# List another user's portfolio items
+node tools/freelancer/cli.js portfolios <userId> [--limit 10] [--offset 0]
+
+# Print raw JSON
+node tools/freelancer/cli.js portfolios [userId] --json
+```
+
+Portfolios are read-only in this CLI. The official SDK exposes portfolio retrieval through `/api/users/0.1/portfolios/`, but write probes against this API version returned `405` for create and `404` for update/delete paths. Create or edit portfolio items through the Freelancer website.
+
 ### Messages
 
 ```bash
@@ -129,5 +159,5 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
 - `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
-- `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
+- `services`, `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
 - `notifications` is implemented, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable
