@@ -489,9 +489,12 @@ Search contests and inspect account activity:
 
 ```bash
 node tools/freelancer/cli.js contests "logo design" --limit 10
-node tools/freelancer/cli.js messages [--limit 10]
+node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
+node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
 node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 ```
+
+`project-messages` uses Freelancer's project-scoped messages API. It is not a dedicated Project Public Clarification Board API; Freelancer's public documentation and the probed API endpoints did not expose one.
 
 ## LinkedIn
 

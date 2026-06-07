@@ -97,8 +97,11 @@ node tools/freelancer/cli.js contests --limit 20   # all active contests
 ### Messages
 
 ```bash
-node tools/freelancer/cli.js messages [--limit 10]
+node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
+node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
 ```
+
+`project-messages` reads Freelancer's project-scoped messages API. The current official API and SDK do not expose a dedicated Project Public Clarification Board endpoint; use this command only for messages returned to your account by the messages API.
 
 ### Notifications
 

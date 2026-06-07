@@ -582,7 +582,9 @@ async function contests(args) {
 async function messages(args) {
   const options = parseOptions(args);
   const limit = Math.min(Number(options.limit || 10), 100);
-  const body = await apiGet("/api/messages/0.1/threads/", { limit, context_type: "project" });
+  const params = { limit, context_type: "project" };
+  if (options.project) params.context = options.project;
+  const body = await apiGet("/api/messages/0.1/threads/", params);
   const threads = body.result?.threads || body.result || [];
   if (!threads.length) {
     console.log("No messages found.");
@@ -594,6 +596,53 @@ async function messages(args) {
     if (t.message_count != null) console.log(`   Messages: ${t.message_count}`);
     if (t.time_updated) console.log(`   Updated: ${new Date(Number(t.time_updated) * 1000).toISOString()}`);
     if (t.last_message?.message) console.log(`   Last: ${String(t.last_message.message).slice(0, 100)}`);
+    console.log("");
+  });
+}
+
+function formatMessageUser(message, users) {
+  const userId = message.from_user || message.sender_id || message.user_id;
+  if (userId == null) return "unknown";
+  const user = users?.[String(userId)] || users?.[userId];
+  return user?.display_name || user?.public_name || user?.username || String(userId);
+}
+
+async function projectMessages(args) {
+  const options = parseOptions(args);
+  const projectId = options._[0];
+  if (!projectId) {
+    throw new Error("Usage: node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]");
+  }
+  const limit = Math.min(Math.max(Number(options.limit || 10), 1), 100);
+  const offset = Math.max(Number(options.offset || 0), 0);
+  const body = await apiGet("/api/messages/0.1/messages/", {
+    context_type: "project",
+    context: projectId,
+    limit,
+    offset,
+  });
+  const result = body.result || {};
+  const messagesList = result.messages || [];
+  const threads = result.threads || {};
+  const users = result.users || {};
+
+  console.log(
+    "Note: this reads Freelancer's project-scoped messages API. It is not a dedicated Public Clarification Board endpoint."
+  );
+  if (!messagesList.length) {
+    console.log("No project-scoped messages found for this project.");
+    if (Object.keys(threads).length) {
+      console.log(`Thread metadata returned: ${Object.keys(threads).length} thread(s).`);
+    }
+    return;
+  }
+
+  console.log(`Showing ${messagesList.length} message(s).\n`);
+  messagesList.forEach((message, index) => {
+    const threadId = message.thread_id || message.thread?.id || "n/a";
+    console.log(`${index + 1}. Thread ID: ${threadId}  From: ${formatMessageUser(message, users)}`);
+    if (message.time_created) console.log(`   Created: ${new Date(Number(message.time_created) * 1000).toISOString()}`);
+    if (message.message) console.log(`   Message: ${String(message.message).replace(/\s+/g, " ").trim()}`);
     console.log("");
   });
 }
@@ -676,7 +725,8 @@ Usage:
   node tools/freelancer/cli.js bids [projectId] [--limit 10]
   node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"
   node tools/freelancer/cli.js contests ["keywords"] [--limit 10] [--offset 0] [--full-description]
-  node tools/freelancer/cli.js messages [--limit 10]
+  node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
+  node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
   node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
   node tools/freelancer/cli.js milestones <projectId>
 
@@ -692,6 +742,7 @@ Examples:
   node tools/freelancer/cli.js bid 40458235 --amount 150 --period 7 --description "I can build this"
   node tools/freelancer/cli.js contests "logo design" --limit 10
   node tools/freelancer/cli.js messages
+  node tools/freelancer/cli.js project-messages 40458235
   node tools/freelancer/cli.js notifications --unread-only
   node tools/freelancer/cli.js milestones 40458235
 `);
@@ -714,6 +765,7 @@ async function main() {
   if (command === "bid") return bid(args);
   if (command === "contests") return contests(args);
   if (command === "messages") return messages(args);
+  if (command === "project-messages") return projectMessages(args);
   if (command === "notifications") return notifications(args);
   if (command === "milestones") return milestones(args);
   throw new Error(`Unknown command: ${command}`);
