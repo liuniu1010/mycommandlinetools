@@ -477,7 +477,13 @@ node tools/freelancer/cli.js user <userId>
 node tools/freelancer/cli.js reviews <projectId>
 node tools/freelancer/cli.js bids [projectId] [--limit 10]
 node tools/freelancer/cli.js milestones <projectId>
+node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--offset 0]
+node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount 320 --description "Working bot and setup guide"
 ```
+
+`milestone-requests` reads milestone payment requests. Freelancer's API is most reliable when filtering by bid ID.
+
+`request-milestone` asks the client to create/fund a milestone payment for your bid. It changes remote account/project state, so confirm the exact project, bid, amount, and description before using it.
 
 Submit a bid:
 

@@ -113,7 +113,13 @@ node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 
 ```bash
 node tools/freelancer/cli.js milestones <projectId>
+node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--offset 0]
+node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount 320 --description "Working bot and setup guide"
 ```
+
+`milestone-requests` reads pending or historical milestone payment requests. Freelancer's API is most reliable when filtering by bid ID.
+
+`request-milestone` asks the client to create/fund a milestone payment for your bid. This is a side-effecting account action and should only be run after confirming the project, bid ID, amount, and description.
 
 ## Notes
 

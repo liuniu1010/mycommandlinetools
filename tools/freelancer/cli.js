@@ -673,7 +673,7 @@ async function milestones(args) {
   const options = parseOptions(args);
   const projectId = options._[0];
   if (!projectId) throw new Error("Usage: node tools/freelancer/cli.js milestones <projectId>");
-  const body = await apiGet("/api/projects/0.1/milestones/", { project_ids: [projectId] });
+  const body = await apiGet("/api/projects/0.1/milestones/", { projects: [projectId] });
   const list = body.result?.milestones || body.result || [];
   if (!list.length) {
     console.log("No milestones found for this project.");
@@ -685,6 +685,59 @@ async function milestones(args) {
     console.log(`   ID: ${m.id}  Status: ${m.status}`);
     if (m.amount) console.log(`   Amount: ${m.amount} ${m.currency?.code || ""}`);
     if (m.time_created) console.log(`   Created: ${new Date(Number(m.time_created) * 1000).toISOString()}`);
+    console.log("");
+  });
+}
+
+async function requestMilestone(args) {
+  const options = parseOptions(args);
+  const projectId = options._[0];
+  if (!projectId || !options.bid || !options.amount || !options.description) {
+    throw new Error(
+      "Usage: node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount <n> --description \"text\""
+    );
+  }
+  const payload = {
+    project_id: Number(projectId),
+    bid_id: Number(options.bid),
+    amount: Number(options.amount),
+    description: options.description,
+  };
+  const body = await apiPost("/api/projects/0.1/milestone_requests/", payload);
+  const result = body.result || body;
+  console.log(`Milestone request submitted successfully. Request ID: ${result.id || "n/a"}`);
+  console.log(JSON.stringify(result, null, 2));
+}
+
+async function milestoneRequests(args) {
+  const options = parseOptions(args);
+  const params = { limit: Math.min(Math.max(Number(options.limit || 10), 1), 100) };
+  if (options.offset) params.offset = Math.max(Number(options.offset), 0);
+  if (options.bid) params.bids = [options.bid];
+  if (options.request) params.milestone_requests = [options.request];
+  if (options.project) params.projects = [options.project];
+  if (!options.bid && !options.request && !options.project) {
+    throw new Error(
+      "Usage: node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--offset 0]"
+    );
+  }
+  const body = await apiGet("/api/projects/0.1/milestone_requests/", params);
+  const requests = body.result?.milestone_requests || body.result || {};
+  const list = Array.isArray(requests) ? requests : Object.values(requests);
+  if (!list.length) {
+    console.log("No milestone requests found.");
+    return;
+  }
+  console.log(`Showing ${list.length} milestone request(s).\n`);
+  list.forEach((request, index) => {
+    const currency = request.currency?.code || "";
+    console.log(`${index + 1}. Request ID: ${request.id}  Status: ${request.status || "n/a"}`);
+    console.log(`   Project ID: ${request.project_id}  Bid ID: ${request.bid_id}`);
+    console.log(`   Amount: ${[request.amount, currency].filter(Boolean).join(" ")}`);
+    if (request.time_requested) {
+      console.log(`   Requested: ${new Date(Number(request.time_requested) * 1000).toISOString()}`);
+    }
+    if (request.description) console.log(`   Description: ${request.description}`);
     console.log("");
   });
 }
@@ -734,6 +787,8 @@ Usage:
   node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
   node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
   node tools/freelancer/cli.js milestones <projectId>
+  node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--offset 0]
+  node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount <n> --description "text"
 
 Examples:
   node tools/freelancer/cli.js auth --client-credentials
@@ -750,6 +805,8 @@ Examples:
   node tools/freelancer/cli.js project-messages 40458235
   node tools/freelancer/cli.js notifications --unread-only
   node tools/freelancer/cli.js milestones 40458235
+  node tools/freelancer/cli.js milestone-requests --bid 487249873
+  node tools/freelancer/cli.js request-milestone 40458235 --bid 487249873 --amount 320 --description "Working bot and setup guide"
 `);
 }
 
@@ -773,6 +830,8 @@ async function main() {
   if (command === "project-messages") return projectMessages(args);
   if (command === "notifications") return notifications(args);
   if (command === "milestones") return milestones(args);
+  if (command === "milestone-requests") return milestoneRequests(args);
+  if (command === "request-milestone") return requestMilestone(args);
   throw new Error(`Unknown command: ${command}`);
 }
 
