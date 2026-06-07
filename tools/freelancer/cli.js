@@ -510,7 +510,7 @@ async function bids(args) {
   const options = parseOptions(args);
   const projectId = options._[0];
   const params = { limit: Math.min(Number(options.limit || 10), 100), job_details: true };
-  if (projectId) params["project_ids[]"] = projectId;
+  if (projectId) params.projects = [projectId];
   const body = await apiGet("/api/projects/0.1/bids/", params);
   const list = body.result?.bids || body.result || [];
   if (!list.length) {
@@ -535,9 +535,14 @@ async function bid(args) {
       "Usage: node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description \"text\" [--milestone-percentage <n>]"
     );
   }
+  const savedToken = readToken();
+  const bidderId = Number(options["bidder-id"] || savedToken.account_id);
+  if (!bidderId) {
+    throw new Error("Could not determine bidder_id. Run `node tools/freelancer/cli.js profile` or pass --bidder-id <userId>.");
+  }
   const payload = {
     project_id: Number(projectId),
-    bidder_id: 0,
+    bidder_id: bidderId,
     amount: Number(options.amount),
     period: Number(options.period),
     description: options.description,
