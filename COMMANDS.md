@@ -430,8 +430,9 @@ Tool notes:
 - Uses the official Freelancer.com API, not website scraping.
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
-- Supports read-only project search/detail, profile and user lookup, reviews, bid reads, contests, messages, notifications, and milestones.
-- Supports bid submission as a side-effecting command; confirm proposal details before using it.
+- Supports read-only project search/detail, profile and user lookup, reviews, bid reads, contests, messages, project messages, milestone payment reads, and milestone request reads.
+- Implements notifications, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable.
+- Supports bid submission and milestone payment request submission as side-effecting commands; confirm proposal or milestone details before using them.
 - Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
 
 Configure credentials:
@@ -481,7 +482,7 @@ node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--of
 node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount 320 --description "Working bot and setup guide"
 ```
 
-`milestone-requests` reads milestone payment requests. Freelancer's API is most reliable when filtering by bid ID.
+`milestone-requests` reads milestone payment requests. Freelancer's API is most reliable when filtering by bid ID; filtering only by project may be denied.
 
 `request-milestone` asks the client to create/fund a milestone payment for your bid. It changes remote account/project state, so confirm the exact project, bid, amount, and description before using it.
 
@@ -501,6 +502,8 @@ node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 ```
 
 `project-messages` uses Freelancer's project-scoped messages API. It is not a dedicated Project Public Clarification Board API; Freelancer's public documentation and the probed API endpoints did not expose one.
+
+`messages` lists message threads. Without `--project`, it lists all available threads, including support or private chat threads returned by Freelancer's API.
 
 ## LinkedIn
 

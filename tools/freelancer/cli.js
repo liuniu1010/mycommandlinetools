@@ -587,8 +587,11 @@ async function contests(args) {
 async function messages(args) {
   const options = parseOptions(args);
   const limit = Math.min(Number(options.limit || 10), 100);
-  const params = { limit, context_type: "project" };
-  if (options.project) params.context = options.project;
+  const params = { limit };
+  if (options.project) {
+    params.context_type = "project";
+    params.context = options.project;
+  }
   const body = await apiGet("/api/messages/0.1/threads/", params);
   const threads = body.result?.threads || body.result || [];
   if (!threads.length) {

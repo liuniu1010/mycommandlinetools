@@ -103,6 +103,8 @@ node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset
 
 `project-messages` reads Freelancer's project-scoped messages API. The current official API and SDK do not expose a dedicated Project Public Clarification Board endpoint; use this command only for messages returned to your account by the messages API.
 
+`messages` lists message threads. Without `--project`, it lists all available threads, including support or private chat threads returned by Freelancer's API.
+
 ### Notifications
 
 ```bash
@@ -117,7 +119,7 @@ node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--of
 node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount 320 --description "Working bot and setup guide"
 ```
 
-`milestone-requests` reads pending or historical milestone payment requests. Freelancer's API is most reliable when filtering by bid ID.
+`milestone-requests` reads pending or historical milestone payment requests. Freelancer's API is most reliable when filtering by bid ID; filtering only by project may be denied.
 
 `request-milestone` asks the client to create/fund a milestone payment for your bid. This is a side-effecting account action and should only be run after confirming the project, bid ID, amount, and description.
 
@@ -126,4 +128,6 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - Tokens stored in `tools/freelancer/.token.json` (mode 0600)
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
 - `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
-- `messages`, `notifications`, `bids`, and `milestones` require user OAuth for full access
+- `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
+- `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
+- `notifications` is implemented, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable
