@@ -1,6 +1,6 @@
 ---
 name: personal-cli-assistant
-description: Use this skill when acting as the user's personal assistant through this repository's local command-line tools for Gmail, Outlook, Google Calendar, Google Drive, OneDrive, Notion, Upwork, Freelancer.com, and LinkedIn Jobs. It covers command selection, provider disambiguation, safety confirmation for side effects, and verification habits for this personal Node.js toolset.
+description: Use this skill when acting as the user's personal assistant through this repository's local command-line tools for Gmail, Outlook, Google Calendar, Google Drive, OneDrive, Notion, Upwork, Freelancer.com, LinkedIn Jobs, and Playwright browser automation. It covers command selection, provider disambiguation, safety confirmation for side effects, and verification habits for this personal Node.js toolset.
 ---
 
 # Personal CLI Assistant
@@ -20,6 +20,7 @@ Run commands from the repository root. Use `COMMANDS.md` as the primary command 
 - Upwork: `node tools/upwork/cli.js ...`
 - Freelancer.com: `node tools/freelancer/cli.js ...`
 - LinkedIn Jobs: `node tools/linkedin/cli.js ...`
+- Playwright browser automation: `node tools/playwright/cli.js ...`
 
 Use the local CLIs instead of external app connectors when the user is clearly working in this repo or asks to use these command-line tools.
 
@@ -43,6 +44,11 @@ For read-only requests, reasonable defaults are allowed:
 - "Find this in Drive" can use read-only Drive search by file name or indexed content.
 - "Find this in OneDrive" can use read-only OneDrive search by file name or indexed content.
 - Job search requests should use read-only search/URL commands first.
+- Browser inspection can use Playwright one-shot read commands first, such as
+  `text --url`, `links --url`, `exists --url`, or `screenshot --url`.
+- Multi-step browser work should use a named Playwright session. Prefer headed
+  sessions when the user needs to log in, solve MFA/CAPTCHA, use a password
+  manager, or manually inspect the browser.
 
 ## Safe Command Patterns
 
@@ -122,6 +128,25 @@ node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"
 
 LinkedIn must only generate or open LinkedIn Jobs URLs. Do not scrape LinkedIn, automate a logged-in account, or claim job results from LinkedIn unless the user provides them.
 
+Playwright browser automation:
+
+```bash
+node tools/playwright/cli.js session start --name work --headless false
+node tools/playwright/cli.js goto https://example.com --session work
+node tools/playwright/cli.js tabs --session work
+node tools/playwright/cli.js tab use --index 1 --session work
+node tools/playwright/cli.js text --selector main --session work
+node tools/playwright/cli.js click --role button --name "Sign in" --session work
+node tools/playwright/cli.js fill --label Email --value user@example.com --session work
+node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
+node tools/playwright/cli.js snapshot --session work --json
+node tools/playwright/cli.js session stop --name work
+node tools/playwright/cli.js text --url https://example.com --selector main
+node tools/playwright/cli.js screenshot --url https://example.com --out downloads/playwright/example.png
+```
+
+Playwright `snapshot` masks raw input values by design, but still summarize browser output carefully and avoid repeating secrets. For login pages, prefer a headed persistent session and let the user type credentials directly into the browser; do not ask the user to send passwords through chat.
+
 ## Side-Effect Commands
 
 Treat these as side-effecting and require explicit user permission before execution. This list is illustrative, not exhaustive; if a command can change remote state, local files outside deliberate read-only inspection, account data, marketplace data, messages, calendar events, browser state, or submitted content, ask first.
@@ -161,6 +186,14 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/notion/cli.js create-comment ...`
 - `node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"`
 - `node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount <n> --description "text"`
+- `node tools/playwright/cli.js session start --headless false ...`
+- `node tools/playwright/cli.js click ...`
+- `node tools/playwright/cli.js fill ...`
+- `node tools/playwright/cli.js press ...`
+- `node tools/playwright/cli.js select ...`
+- `node tools/playwright/cli.js check ...`
+- `node tools/playwright/cli.js uncheck ...`
+- `node tools/playwright/cli.js screenshot --out <file> ...`
 - Any command with `--open`, plus Upwork/Freelancer `open` and LinkedIn `developer`.
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.
 

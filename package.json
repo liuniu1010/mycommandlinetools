@@ -10,6 +10,7 @@
     "notion-cli": "./tools/notion/cli.js",
     "onedrive-cli": "./tools/onedrive/cli.js",
     "outlook-cli": "./tools/outlook/cli.js",
+    "playwright-cli": "./tools/playwright/cli.js",
     "upwork-cli": "./tools/upwork/cli.js",
     "gmail-cli": "./tools/gmail/cli.js"
   },
@@ -23,5 +24,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
 }

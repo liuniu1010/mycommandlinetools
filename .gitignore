@@ -12,6 +12,11 @@ client_secret*.json
 node_modules/
 dist/
 downloads/
+tools/playwright/.profiles/
+tools/playwright/.sessions/
+tools/playwright/*.png
+tools/playwright/*.webm
+tools/playwright/*.zip
 npm-debug.log*
 .agents/tmp/
 .agents/cache/

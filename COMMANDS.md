@@ -700,6 +700,99 @@ node tools/outlook/cli.js send --to you@example.com --subject "Files" --body "At
 node tools/outlook/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/a.pdf --attach /tmp/b.docx
 ```
 
+## Playwright
+
+Implementation:
+
+```text
+tools/playwright/cli.js
+```
+
+Tool notes:
+
+- Uses Playwright to automate Chromium.
+- Supports persistent browser sessions so simple commands can combine into a
+  larger browser workflow.
+- Supports one-shot read commands with `--url` for text, HTML, links, locator
+  checks, and screenshots.
+- Supports tabs with `tabs` and `tab use --index <n>`.
+- Supports iframe targeting with `--frame <iframe-css-selector>` and repeated
+  element targeting with `--nth <index>`.
+- `snapshot` masks raw input values so password and form field contents are not
+  exposed by default.
+- Browser profiles live under `tools/playwright/.profiles/`.
+- Session metadata lives under `tools/playwright/.sessions/`.
+- Do not commit browser profiles, sessions, screenshots, videos, or traces.
+
+Install Chromium browser binaries if needed:
+
+```bash
+npx playwright install chromium
+```
+
+Start a visible session:
+
+```bash
+node tools/playwright/cli.js session start --name work --headless false
+```
+
+Navigate and act in the same session:
+
+```bash
+node tools/playwright/cli.js goto https://example.com --session work
+node tools/playwright/cli.js text --selector main --session work
+node tools/playwright/cli.js screenshot --session work --out downloads/playwright/example.png
+```
+
+Click and fill by accessible locators:
+
+```bash
+node tools/playwright/cli.js click --role button --name "Sign in" --session work
+node tools/playwright/cli.js fill --label Email --value user@example.com --session work
+node tools/playwright/cli.js wait --text Dashboard --session work
+```
+
+Target iframes or repeated elements:
+
+```bash
+node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
+node tools/playwright/cli.js text --selector body --frame iframe --session work
+```
+
+Use one-shot read mode without a session:
+
+```bash
+node tools/playwright/cli.js text --url https://example.com --selector main
+node tools/playwright/cli.js links --url https://example.com --limit 20
+node tools/playwright/cli.js exists --url https://example.com --text "Example Domain"
+```
+
+Inspect current page state:
+
+```bash
+node tools/playwright/cli.js snapshot --session work --json
+```
+
+Check or stop a session:
+
+```bash
+node tools/playwright/cli.js session status --name work
+node tools/playwright/cli.js session stop --name work
+```
+
+List tabs and switch the active tab:
+
+```bash
+node tools/playwright/cli.js tabs --session work
+node tools/playwright/cli.js tab use --index 1 --session work
+```
+
+Run a JSON flow:
+
+```bash
+node tools/playwright/cli.js flow downloads/example-flow.json
+```
+
 ## Upwork
 
 Implementation:

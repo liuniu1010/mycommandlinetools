@@ -23,11 +23,12 @@ node tools/gdrive/cli.js help
 node tools/notion/cli.js help
 node tools/freelancer/cli.js help
 node tools/linkedin/cli.js help
+node tools/playwright/cli.js help
 ```
 
 ## Architecture
 
-Zero npm runtime dependencies — everything uses built-in Node APIs (native `fetch`, `http`, `fs`, `path`, `child_process`). Each tool is a single self-contained `tools/<tool-name>/cli.js` file; no shared library code between tools.
+Minimal npm runtime dependencies — tools use built-in Node APIs (native `fetch`, `http`, `fs`, `path`, `child_process`) except Playwright, which requires the `playwright` npm package for Chromium automation. Each tool is a single self-contained `tools/<tool-name>/cli.js` file; no shared library code between tools.
 
 ### Tools
 
@@ -38,6 +39,7 @@ Zero npm runtime dependencies — everything uses built-in Node APIs (native `fe
 - **tools/notion/** — Notion workspace via REST API (`https://api.notion.com/v1`, version `2022-06-28`). Commands: `auth`, `search [--query] [--filter page|database] [--limit]`, `resolve-page <name>`, `resolve-database <name>`, `get-page <id-or-url>`, `get-database <id-or-url>`, `create-page --database-id --properties-json`, `update-page <id-or-url> --properties-json`, `archive-page <id-or-url>`, `query-database <id-or-url> [--filter-json] [--sorts-json] [--limit]`, `query-database-summary --summary-json`, `create-database`, `update-database`, `list-block-children`, `append-block-children --children-json`, `update-block --body-json`, `archive-block`, `create-comment --page-id --text`, `list-comments`, `list-users`, `get-user <id>`.
 - **tools/linkedin/** — Builds LinkedIn Jobs search URLs and opens in browser; **no API calls or scraping**. Commands: `search [keywords] [--location] [--date day|week|month] [--workplace remote|hybrid|onsite] [--type fulltime|parttime|contract|...] [--experience entry|associate|mid|senior|director|executive] [--start] [--open]`, `developer`.
 - **tools/freelancer/** — Freelancer.com via REST API. Commands: `auth [--client-credentials]`, `search "keywords" [--limit] [--offset] [--full-description] [--user-details]`, `project <id>`, `open <id-or-url>`, `profile`, `user <id>`, `reviews <projectId>`, `bids [projectId] [--limit]`, `bid <projectId> --amount --period --description`, `contests ["keywords"] [--limit]`, `messages [--limit]`, `notifications [--limit] [--unread-only]`, `milestones <projectId>`.
+- **tools/playwright/** — Chromium browser automation via Playwright. Commands: `session start [--name] [--headless] [--viewport] [--profile] [--user-agent]`, `session status [--name]`, `session stop [--name] [--force]`, `goto <url> [--session]`, `click [locator] [--session]`, `fill [locator] --value <text> [--session]`, `press <key> [--session]`, `select [locator] --value <v> [--session]`, `check/uncheck [locator] [--session]`, `wait [locator] [--state] [--load-state] [--session]`, `text [locator] [--session|--url]`, `html [locator] [--session|--url]`, `links [locator] [--session|--url] [--limit]`, `exists [locator] [--session|--url]`, `screenshot --out <file> [--session|--url] [--full-page]`, `snapshot [--session] [--json]`, `tabs [--session]`, `tab use --index <n> [--session]`, `flow <file.json> [--session]`. Locators: `--selector`, `--text`, `--role --name`, `--label`, `--placeholder`, `--title`, `--test-id`, `--nth`, `--frame`.
 
 ### Environment variables (see `.env.example`)
 
@@ -50,6 +52,7 @@ Zero npm runtime dependencies — everything uses built-in Node APIs (native `fe
 | Notion | `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET` | `NOTION_CALLBACK_URL`, `NOTION_VERSION` |
 | Freelancer | `FREELANCER_CLIENT_ID`, `FREELANCER_CLIENT_SECRET` | `FREELANCER_CALLBACK_URL`, `FREELANCER_SCOPE`, `FREELANCER_ADVANCED_SCOPES`, `FREELANCER_BASE_URL` |
 | LinkedIn | — | — |
+| Playwright | — | — |
 
 All tools share the same default callback: `http://localhost:3000/callback`.
 
@@ -69,6 +72,7 @@ All tools share the same default callback: `http://localhost:3000/callback`.
 - **Gmail** always requests `access_type=offline` and `prompt=consent` to guarantee a refresh token.
 - **GDrive** uses full Drive scope by default so write commands work. Permanent delete requires `--yes`.
 - **LinkedIn** has no auth at all — it only constructs URLs with hardcoded LinkedIn query-parameter codes for filter values (e.g., `r86400` for "past day", `2` for "remote").
+- **Playwright** has no OAuth auth — it launches a Chromium browser and stores persistent browser profiles under `tools/playwright/.profiles/<name>/`. Session metadata (port, token, PID) is stored under `tools/playwright/.sessions/`. Do not commit these directories.
 
 ### Scripts
 
