@@ -114,6 +114,51 @@ Snapshot output includes URL, title, visible body text, and interactive element
 metadata. It does not read raw input values, so password and form field contents
 are not exposed by default.
 
+For repeated website checks, use targeted inspection commands:
+
+```bash
+node tools/playwright/cli.js page-state --session work --json
+node tools/playwright/cli.js read-keylines --session work --pattern "submitted|error|Connects" --context 1
+node tools/playwright/cli.js controls --session work --pattern "submit|apply|proposal" --json
+node tools/playwright/cli.js inspect-form --session work --json
+```
+
+`page-state` reports URL, title, viewport, scroll position, likely login/CAPTCHA
+blocking, and a compact text preview. `read-keylines` filters visible text by a
+regular expression. `controls` lists visible buttons, links, inputs, labels, and
+ARIA controls with stable DOM indexes for the current page. `inspect-form` lists
+visible form fields and validation messages while avoiding password, hidden, and
+file values.
+
+These read-only commands can also use `--url` for one-shot reads:
+
+```bash
+node tools/playwright/cli.js read-keylines --url https://example.com --pattern "Example"
+node tools/playwright/cli.js inspect-form --url https://example.com --json
+```
+
+## Form Workflows
+
+For pages with custom controls or long forms:
+
+```bash
+node tools/playwright/cli.js scroll --to bottom --session work
+node tools/playwright/cli.js click-index --index 42 --session work
+node tools/playwright/cli.js select-combobox --index 44 --option "Never" --session work
+node tools/playwright/cli.js fill-textareas --values downloads/playwright/answers.json --session work
+node tools/playwright/cli.js submit-check --role button --name "Submit proposal" --session work
+```
+
+`click-index` uses indexes from `controls`. `select-combobox` is for modern
+non-native dropdowns such as `div role="combobox"` widgets; native `<select>`
+elements should still use `select`. `fill-textareas` accepts a JSON array from a
+file path or inline JSON string and fills textareas by order. `submit-check`
+clicks the explicit submit locator you provide, waits briefly, then prints
+success or validation lines.
+
+For actions that submit proposals, send messages, place bids, spend Connects, or
+otherwise affect an account, get user confirmation before running the command.
+
 ## Flow Files
 
 Flows are JSON files for repeatable sequences against an existing session. Flow

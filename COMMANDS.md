@@ -710,14 +710,19 @@ tools/playwright/cli.js
 
 Tool notes:
 
-- Uses Playwright to automate Chromium.
+- Uses Playwright to automate Chromium or a system Chrome executable supplied
+  with `--executable-path`.
 - Supports persistent browser sessions so simple commands can combine into a
   larger browser workflow.
 - Supports one-shot read commands with `--url` for text, HTML, links, locator
-  checks, and screenshots.
+  checks, screenshots, key-line reads, form inspection, control listing, and
+  page-state checks.
 - Supports tabs with `tabs` and `tab use --index <n>`.
 - Supports iframe targeting with `--frame <iframe-css-selector>` and repeated
   element targeting with `--nth <index>`.
+- Supports common form workflows with `inspect-form`, `controls`,
+  `fill-textareas`, `select-combobox`, `click-index`, `scroll`, and
+  `submit-check`.
 - `snapshot` masks raw input values so password and form field contents are not
   exposed by default.
 - Browser profiles live under `tools/playwright/.profiles/`.
@@ -734,6 +739,7 @@ Start a visible session:
 
 ```bash
 node tools/playwright/cli.js session start --name work --headless false
+node tools/playwright/cli.js session start --name work --headless false --executable-path /usr/bin/google-chrome
 ```
 
 Navigate and act in the same session:
@@ -765,12 +771,28 @@ Use one-shot read mode without a session:
 node tools/playwright/cli.js text --url https://example.com --selector main
 node tools/playwright/cli.js links --url https://example.com --limit 20
 node tools/playwright/cli.js exists --url https://example.com --text "Example Domain"
+node tools/playwright/cli.js read-keylines --url https://example.com --pattern "Example"
+node tools/playwright/cli.js inspect-form --url https://example.com --json
 ```
 
 Inspect current page state:
 
 ```bash
 node tools/playwright/cli.js snapshot --session work --json
+node tools/playwright/cli.js page-state --session work --json
+node tools/playwright/cli.js read-keylines --session work --pattern "submitted|error|Connects" --context 1
+node tools/playwright/cli.js controls --session work --pattern "submit|apply|proposal" --json
+node tools/playwright/cli.js inspect-form --session work --json
+```
+
+Handle form-heavy pages and custom controls:
+
+```bash
+node tools/playwright/cli.js scroll --to bottom --session work
+node tools/playwright/cli.js click-index --index 42 --session work
+node tools/playwright/cli.js select-combobox --index 44 --option "Never" --session work
+node tools/playwright/cli.js fill-textareas --values downloads/playwright/answers.json --session work
+node tools/playwright/cli.js submit-check --role button --name "Submit proposal" --session work
 ```
 
 Check or stop a session:
@@ -807,7 +829,8 @@ Tool notes:
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/upwork/.token.json`, including account metadata when permitted by the API key.
 - Does not submit proposals. Use it to search and inspect jobs, then apply
-  manually in the Upwork website.
+  manually or with explicitly confirmed Playwright browser assistance in the
+  Upwork website.
 
 Authenticate with Upwork:
 

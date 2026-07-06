@@ -45,10 +45,14 @@ For read-only requests, reasonable defaults are allowed:
 - "Find this in OneDrive" can use read-only OneDrive search by file name or indexed content.
 - Job search requests should use read-only search/URL commands first.
 - Browser inspection can use Playwright one-shot read commands first, such as
-  `text --url`, `links --url`, `exists --url`, or `screenshot --url`.
+  `text --url`, `links --url`, `exists --url`, `read-keylines --url`,
+  `inspect-form --url`, `page-state --url`, or `screenshot --url`.
 - Multi-step browser work should use a named Playwright session. Prefer headed
   sessions when the user needs to log in, solve MFA/CAPTCHA, use a password
   manager, or manually inspect the browser.
+- Prefer reusable Playwright CLI commands over ad-hoc `node -e` scripts for
+  common browser tasks. Use `node -e` only for unusual one-off inspection or
+  debugging that the CLI cannot express cleanly.
 
 ## Safe Command Patterns
 
@@ -132,20 +136,29 @@ Playwright browser automation:
 
 ```bash
 node tools/playwright/cli.js session start --name work --headless false
+node tools/playwright/cli.js session start --name work --headless false --executable-path /usr/bin/google-chrome
 node tools/playwright/cli.js goto https://example.com --session work
 node tools/playwright/cli.js tabs --session work
 node tools/playwright/cli.js tab use --index 1 --session work
 node tools/playwright/cli.js text --selector main --session work
+node tools/playwright/cli.js page-state --session work --json
+node tools/playwright/cli.js read-keylines --session work --pattern "submitted|error|Connects" --context 1
+node tools/playwright/cli.js controls --session work --pattern "submit|apply|proposal" --json
+node tools/playwright/cli.js inspect-form --session work --json
 node tools/playwright/cli.js click --role button --name "Sign in" --session work
 node tools/playwright/cli.js fill --label Email --value user@example.com --session work
 node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
+node tools/playwright/cli.js select-combobox --index 44 --option "Never" --session work
+node tools/playwright/cli.js fill-textareas --values downloads/playwright/answers.json --session work
+node tools/playwright/cli.js submit-check --role button --name "Submit proposal" --session work
 node tools/playwright/cli.js snapshot --session work --json
 node tools/playwright/cli.js session stop --name work
 node tools/playwright/cli.js text --url https://example.com --selector main
+node tools/playwright/cli.js read-keylines --url https://example.com --pattern "Example"
 node tools/playwright/cli.js screenshot --url https://example.com --out downloads/playwright/example.png
 ```
 
-Playwright `snapshot` masks raw input values by design, but still summarize browser output carefully and avoid repeating secrets. For login pages, prefer a headed persistent session and let the user type credentials directly into the browser; do not ask the user to send passwords through chat.
+Playwright `snapshot` masks raw input values by design. `inspect-form` also avoids password, hidden, and file values, but still summarize browser output carefully and avoid repeating secrets. For login pages, prefer a headed persistent session and let the user type credentials directly into the browser; do not ask the user to send passwords through chat.
 
 ## Side-Effect Commands
 
@@ -193,6 +206,11 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/playwright/cli.js select ...`
 - `node tools/playwright/cli.js check ...`
 - `node tools/playwright/cli.js uncheck ...`
+- `node tools/playwright/cli.js scroll ...`
+- `node tools/playwright/cli.js click-index ...`
+- `node tools/playwright/cli.js select-combobox ...`
+- `node tools/playwright/cli.js fill-textareas ...`
+- `node tools/playwright/cli.js submit-check ...`
 - `node tools/playwright/cli.js screenshot --out <file> ...`
 - Any command with `--open`, plus Upwork/Freelancer `open` and LinkedIn `developer`.
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.

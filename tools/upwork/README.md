@@ -25,3 +25,8 @@ node tools/upwork/cli.js open <jobId-or-ciphertext>
 ```
 
 OAuth tokens are stored locally in `tools/upwork/.token.json`. The token file also includes account metadata when the Upwork API key has permission to read the current user.
+
+This CLI is for OAuth, search, lookup, and opening job pages. It does not submit
+proposals through the Upwork API. For logged-in website workflows such as reading
+proposal forms, filling proposal answers, or checking submit results, use
+`node tools/playwright/cli.js ...` with an explicitly confirmed browser session.

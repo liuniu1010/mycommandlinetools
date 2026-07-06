@@ -151,6 +151,37 @@ function writeOutput(data, options) {
     });
     return;
   }
+  if (data.lines) {
+    data.lines.forEach((item) => {
+      if (typeof item === "string") console.log(item);
+      else console.log(`${item.index}: ${item.line}`);
+    });
+    return;
+  }
+  if (data.controls) {
+    data.controls.forEach((item) => {
+      console.log(`${item.index}. ${item.tag}${item.role ? `[${item.role}]` : ""} ${item.text || item.label || ""}`);
+    });
+    return;
+  }
+  if (data.fields) {
+    data.fields.forEach((item) => {
+      const label = item.label || item.nearby || item.placeholder || item.name || "";
+      console.log(`${item.index}. ${item.tag}${item.type ? `[${item.type}]` : ""} ${label}`);
+    });
+    if (data.errors && data.errors.length) {
+      console.log("Errors:");
+      data.errors.forEach((item) => console.log(`- ${item}`));
+    }
+    return;
+  }
+  if (data.state) {
+    if (data.state.url) console.log(`URL: ${data.state.url}`);
+    if (data.state.title != null) console.log(`Title: ${data.state.title}`);
+    if (data.state.likelyBlocked != null) console.log(`Likely blocked: ${data.state.likelyBlocked}`);
+    if (data.state.scroll) console.log(`Scroll: ${data.state.scroll.x},${data.state.scroll.y}`);
+    return;
+  }
   if (data.exists != null) {
     console.log(data.exists ? "Found." : "Not found.");
     return;
@@ -258,6 +289,287 @@ async function pageLinks(page, options) {
   );
 }
 
+function splitLines(text) {
+  return String(text || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function regexOption(value, fallback) {
+  const pattern = value && value !== true ? value : fallback;
+  if (!pattern) usageError("--pattern <regex> is required");
+  return new RegExp(pattern, "i");
+}
+
+function readJsonValue(value, label) {
+  if (!value || value === true) usageError(`${label} requires JSON text or a file path`);
+  const resolved = path.resolve(ROOT, value);
+  const raw = fs.existsSync(resolved) ? fs.readFileSync(resolved, "utf8") : value;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    usageError(`Invalid JSON for ${label}: ${err.message}`);
+  }
+  return null;
+}
+
+async function readKeylines(page, options) {
+  const text = await pageText(page, options);
+  const pattern = regexOption(options.pattern || options.keyword, null);
+  const context = options.context != null && options.context !== true ? integerOption(options.context, "--context") : 0;
+  const limit = numberOption(options.limit, 80);
+  const lines = splitLines(text);
+  const results = [];
+  const seen = new Set();
+  for (let i = 0; i < lines.length && results.length < limit; i += 1) {
+    if (!pattern.test(lines[i])) continue;
+    const start = Math.max(0, i - context);
+    const end = Math.min(lines.length - 1, i + context);
+    for (let j = start; j <= end && results.length < limit; j += 1) {
+      if (seen.has(j)) continue;
+      seen.add(j);
+      results.push({ index: j, line: lines[j] });
+    }
+  }
+  return { lines: results, ok: true };
+}
+
+async function pageState(page, options) {
+  const text = await page.locator("body").innerText({ timeout: numberOption(options.timeout, DEFAULT_TIMEOUT) }).catch(() => "");
+  const state = await page.evaluate(() => ({
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+    scroll: { x: window.scrollX, y: window.scrollY },
+  }));
+  const compact = text.replace(/\s+/g, " ").trim();
+  return {
+    state: {
+      url: page.url(),
+      title: await page.title(),
+      viewport: state.viewport,
+      scroll: state.scroll,
+      likelyBlocked: /Verify you are human|Just a moment|Cloudflare|Log in|Sign up/i.test(text),
+      text: compact.slice(0, numberOption(options.limit, 1500)),
+    },
+    ok: true,
+  };
+}
+
+async function pageControls(page, options) {
+  const limit = numberOption(options.limit, 120);
+  const pattern = options.pattern && options.pattern !== true ? options.pattern : null;
+  const controls = await page.evaluate(
+    ({ max, filterPattern }) => {
+      const re = filterPattern ? new RegExp(filterPattern, "i") : null;
+      const visible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+      const textOf = (el) =>
+        (
+          el.innerText ||
+          el.textContent ||
+          el.getAttribute("aria-label") ||
+          el.getAttribute("placeholder") ||
+          el.getAttribute("title") ||
+          el.value ||
+          ""
+        )
+          .replace(/\s+/g, " ")
+          .trim();
+      const selector = [
+        "button",
+        "a",
+        "input",
+        "textarea",
+        "select",
+        "label",
+        "[role=button]",
+        "[role=link]",
+        "[role=combobox]",
+        "[role=option]",
+        "[role=checkbox]",
+        "[role=switch]",
+      ].join(",");
+      return Array.from(document.querySelectorAll(selector))
+        .map((el, index) => ({
+          index,
+          tag: el.tagName.toLowerCase(),
+          type: el.getAttribute("type"),
+          role: el.getAttribute("role"),
+          text: textOf(el).slice(0, 180),
+          href: el.getAttribute("href"),
+          disabled: Boolean(el.disabled) || el.getAttribute("aria-disabled") === "true",
+          checked: Boolean(el.checked) || el.getAttribute("aria-checked") === "true",
+          visible: visible(el),
+        }))
+        .filter((item) => item.visible && (!re || re.test(item.text)))
+        .slice(0, max);
+    },
+    { max: limit, filterPattern: pattern }
+  );
+  return { controls, ok: true };
+}
+
+async function inspectForm(page, options) {
+  const limit = numberOption(options.limit, 120);
+  const result = await page.evaluate((max) => {
+    const visible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
+    const nearbyText = (el) => {
+      let node = el.parentElement;
+      for (let i = 0; node && i < 4; i += 1, node = node.parentElement) {
+        const text = clean(node.innerText || node.textContent);
+        if (text) return text.slice(0, 300);
+      }
+      return "";
+    };
+    const safeValue = (el) => {
+      const type = (el.getAttribute("type") || "").toLowerCase();
+      if (["password", "hidden", "file"].includes(type)) return "";
+      if (el.tagName.toLowerCase() === "textarea") return (el.value || "").slice(0, 120);
+      if (["text", "search", "number", "email", "url", "tel", ""].includes(type)) return (el.value || "").slice(0, 120);
+      return "";
+    };
+    const fields = Array.from(document.querySelectorAll("input, textarea, select"))
+      .map((el, index) => ({
+        index,
+        tag: el.tagName.toLowerCase(),
+        type: el.getAttribute("type"),
+        name: el.getAttribute("name"),
+        label: el.getAttribute("aria-label") || "",
+        placeholder: el.getAttribute("placeholder") || "",
+        value: safeValue(el),
+        invalid: el.getAttribute("aria-invalid") === "true",
+        nearby: nearbyText(el),
+        visible: visible(el),
+      }))
+      .filter((item) => item.visible)
+      .slice(0, max);
+    const errors = Array.from(
+      document.querySelectorAll("[role=alert], [aria-invalid=true], .air3-form-message-error, .error, .has-error")
+    )
+      .filter(visible)
+      .map((el) => clean(el.innerText || el.textContent))
+      .filter(Boolean)
+      .slice(0, max);
+    return { fields, errors: [...new Set(errors)] };
+  }, limit);
+  return { ...result, ok: true };
+}
+
+async function clickControlIndex(page, options) {
+  if (options.index == null || options.index === true) usageError("click-index requires --index <n>");
+  const index = integerOption(options.index, "--index");
+  const clicked = await page.evaluate((targetIndex) => {
+    const selector = [
+      "button",
+      "a",
+      "input",
+      "textarea",
+      "select",
+      "label",
+      "[role=button]",
+      "[role=link]",
+      "[role=combobox]",
+      "[role=option]",
+      "[role=checkbox]",
+      "[role=switch]",
+    ].join(",");
+    const el = Array.from(document.querySelectorAll(selector))[targetIndex];
+    if (!el) return false;
+    el.click();
+    return true;
+  }, index);
+  if (!clicked) throw new Error(`No control found at index ${index}. Run controls first.`);
+  return { url: page.url(), title: await page.title(), ok: true };
+}
+
+async function selectCombobox(page, options) {
+  if (!options.option || options.option === true) usageError("select-combobox requires --option <text>");
+  const timeout = numberOption(options.timeout, DEFAULT_TIMEOUT);
+  const locator = locatorFromOptions(page, options);
+  if (!locator && (options.index == null || options.index === true)) {
+    usageError("select-combobox requires locator options or --index <n>");
+  }
+  if (locator) {
+    await locator.click({ timeout });
+  } else {
+    await clickControlIndex(page, options);
+  }
+  await page.waitForTimeout(300);
+  const exact = options.exact !== "false";
+  const selected = await page.evaluate(
+    ({ option, exactMatch }) => {
+      const visible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+      const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
+      const candidates = Array.from(document.querySelectorAll("[role=option], li, button, div, span, a"))
+        .filter(visible)
+        .filter((el) => {
+          const text = clean(el.innerText || el.textContent);
+          return exactMatch ? text === option : text.toLowerCase().includes(option.toLowerCase());
+        });
+      const el = candidates[candidates.length - 1];
+      if (!el) return false;
+      el.click();
+      return true;
+    },
+    { option: String(options.option), exactMatch: exact }
+  );
+  if (!selected) throw new Error(`Combobox option not found: ${options.option}`);
+  return { url: page.url(), title: await page.title(), ok: true };
+}
+
+async function scrollPage(page, options) {
+  const to = options.to && options.to !== true ? options.to : null;
+  const x = options.x && options.x !== true ? Number(options.x) : 0;
+  const y = options.y && options.y !== true ? Number(options.y) : 0;
+  if (to && !["top", "bottom"].includes(to)) usageError("--to must be top or bottom");
+  if (!to && (!Number.isFinite(x) || !Number.isFinite(y))) usageError("--x and --y must be numbers");
+  const state = await page.evaluate(
+    ({ scrollTo, deltaX, deltaY }) => {
+      if (scrollTo === "top") window.scrollTo(0, 0);
+      else if (scrollTo === "bottom") window.scrollTo(0, document.body.scrollHeight);
+      else window.scrollBy(deltaX, deltaY);
+      return { x: window.scrollX, y: window.scrollY };
+    },
+    { scrollTo: to, deltaX: x, deltaY: y }
+  );
+  return { state: { url: page.url(), title: await page.title(), scroll: state }, ok: true };
+}
+
+async function fillTextareas(page, options) {
+  const source = options.values && options.values !== true ? options.values : options.file;
+  const values = readJsonValue(source, "--values");
+  if (!Array.isArray(values)) usageError("--values must be a JSON array");
+  const start = options.start != null && options.start !== true ? integerOption(options.start, "--start") : 0;
+  const textareas = page.locator("textarea");
+  const count = await textareas.count();
+  if (start + values.length > count) {
+    throw new Error(`Not enough textareas. Need ${start + values.length}, found ${count}.`);
+  }
+  for (let i = 0; i < values.length; i += 1) {
+    await textareas.nth(start + i).scrollIntoViewIfNeeded();
+    await textareas.nth(start + i).fill(String(values[i]), { timeout: numberOption(options.timeout, DEFAULT_TIMEOUT) });
+  }
+  return { ok: true, filled: values.length };
+}
+
+async function submitCheck(page, options) {
+  const locator = locatorFromOptions(page, options);
+  if (!locator) usageError("submit-check requires locator options for the submit button");
+  await locator.scrollIntoViewIfNeeded();
+  await locator.click({ timeout: numberOption(options.timeout, DEFAULT_TIMEOUT) });
+  await page.waitForTimeout(numberOption(options.wait, 3000));
+  const text = await page.locator("body").innerText({ timeout: numberOption(options.timeout, DEFAULT_TIMEOUT) }).catch(() => "");
+  const pattern = regexOption(
+    options.pattern,
+    "submitted|success|sent|proposal|application|error|required|fix|captcha|human|closed|not available"
+  );
+  const lines = splitLines(text)
+    .map((line, index) => ({ index, line }))
+    .filter((item) => pattern.test(item.line))
+    .slice(0, numberOption(options.limit, 80));
+  return { url: page.url(), title: await page.title(), lines, ok: true };
+}
+
 async function snapshot(page) {
   const elementSelector = "a, button, input, textarea, select, [role=button], [role=link]";
   const elements = await page.locator(elementSelector).evaluateAll((items) =>
@@ -361,6 +673,15 @@ async function runAction(page, command, options) {
     });
     return { screenshot: out, ok: true };
   }
+  if (command === "read-keylines") return readKeylines(target, options);
+  if (command === "controls") return pageControls(page, options);
+  if (command === "inspect-form") return inspectForm(page, options);
+  if (command === "page-state") return pageState(page, options);
+  if (command === "scroll") return scrollPage(page, options);
+  if (command === "click-index") return clickControlIndex(page, options);
+  if (command === "select-combobox") return selectCombobox(target, options);
+  if (command === "fill-textareas") return fillTextareas(target, options);
+  if (command === "submit-check") return submitCheck(target, options);
   if (command === "snapshot") return snapshot(page);
   usageError(`Unknown command: ${command}`);
 }
@@ -379,7 +700,24 @@ async function listTabs(context, activePage) {
 
 async function runOneShot(command, options) {
   if (!options.url || options.url === true) usageError(`${command} requires --url <url> or --session <name>`);
-  if (["click", "fill", "press", "select", "check", "uncheck", "wait", "goto", "snapshot"].includes(command)) {
+  if (
+    [
+      "click",
+      "fill",
+      "press",
+      "select",
+      "check",
+      "uncheck",
+      "wait",
+      "goto",
+      "snapshot",
+      "scroll",
+      "click-index",
+      "select-combobox",
+      "fill-textareas",
+      "submit-check",
+    ].includes(command)
+  ) {
     usageError(`${command} requires --session in this version`);
   }
   const { chromium } = loadPlaywright();
@@ -416,6 +754,18 @@ async function requestSession(name, payload) {
     );
   }
   const body = JSON.stringify(payload);
+  const optionTimeout = payload.options && payload.options.timeout != null && payload.options.timeout !== true
+    ? Number(payload.options.timeout)
+    : DEFAULT_TIMEOUT;
+  const optionWait = payload.options && payload.options.wait != null && payload.options.wait !== true
+    ? Number(payload.options.wait)
+    : 0;
+  const requestTimeout = Math.max(
+    3000,
+    (Number.isFinite(optionTimeout) ? optionTimeout : DEFAULT_TIMEOUT) +
+      (Number.isFinite(optionWait) ? optionWait : 0) +
+      1000
+  );
   const response = await new Promise((resolve, reject) => {
     const req = http.request(
       {
@@ -428,7 +778,7 @@ async function requestSession(name, payload) {
           "Content-Length": Buffer.byteLength(body),
           "X-Playwright-Cli-Token": session.token,
         },
-        timeout: 3000,
+        timeout: requestTimeout,
       },
       (res) => {
         let text = "";
@@ -630,6 +980,15 @@ Usage:
   node tools/playwright/cli.js links [locator options] [--session default] [--url <url>] [--limit 50]
   node tools/playwright/cli.js exists [locator options] [--session default] [--url <url>]
   node tools/playwright/cli.js screenshot --out <file> [--session default] [--url <url>] [--full-page]
+  node tools/playwright/cli.js read-keylines --pattern <regex> [--context 1] [--session default] [--url <url>]
+  node tools/playwright/cli.js controls [--pattern <regex>] [--session default] [--url <url>] [--json]
+  node tools/playwright/cli.js inspect-form [--session default] [--url <url>] [--json]
+  node tools/playwright/cli.js page-state [--session default] [--url <url>] [--json]
+  node tools/playwright/cli.js scroll [--to top|bottom | --x 0 --y 500] [--session default]
+  node tools/playwright/cli.js click-index --index <n> [--session default]
+  node tools/playwright/cli.js select-combobox [locator options|--index <n>] --option <text> [--session default]
+  node tools/playwright/cli.js fill-textareas --values <json-or-file> [--start 0] [--session default]
+  node tools/playwright/cli.js submit-check [locator options] [--pattern <regex>] [--session default]
   node tools/playwright/cli.js snapshot [--session default] [--json]
   node tools/playwright/cli.js tabs [--session default]
   node tools/playwright/cli.js tab use --index <n> [--session default]
@@ -654,6 +1013,8 @@ Examples:
   node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
   node tools/playwright/cli.js screenshot --session work --out downloads/playwright/example.png
   node tools/playwright/cli.js text --url https://example.com --selector main
+  node tools/playwright/cli.js read-keylines --session work --pattern "submitted|error|Connects"
+  node tools/playwright/cli.js inspect-form --session work --json
 `);
 }
 
@@ -841,6 +1202,15 @@ async function main() {
     "links",
     "exists",
     "screenshot",
+    "read-keylines",
+    "controls",
+    "inspect-form",
+    "page-state",
+    "scroll",
+    "click-index",
+    "select-combobox",
+    "fill-textareas",
+    "submit-check",
     "snapshot",
   ]);
   if (pageCommands.has(command)) return commandWithPage(command, [subcommand, ...rest].filter(Boolean));
