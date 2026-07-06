@@ -109,10 +109,15 @@ function isBrowserMissing(err) {
 }
 
 function chromiumLaunchOptions(options = {}) {
+  const launchOptions = { ...options };
+  if (launchOptions["executable-path"]) {
+    launchOptions.executablePath = launchOptions["executable-path"];
+    delete launchOptions["executable-path"];
+  }
   return {
-    ...options,
+    ...launchOptions,
     chromiumSandbox: false,
-    args: [...(options.args || []), "--no-sandbox", "--disable-setuid-sandbox"],
+    args: [...(launchOptions.args || []), "--no-sandbox", "--disable-setuid-sandbox"],
   };
 }
 
@@ -516,6 +521,9 @@ async function startSession(args) {
   if (options.viewport && options.viewport !== true) serverArgs.push("--viewport", options.viewport);
   if (options.profile && options.profile !== true) serverArgs.push("--profile", options.profile);
   if (options["user-agent"] && options["user-agent"] !== true) serverArgs.push("--user-agent", options["user-agent"]);
+  if (options["executable-path"] && options["executable-path"] !== true) {
+    serverArgs.push("--executable-path", options["executable-path"]);
+  }
   const child = spawn(process.execPath, serverArgs, {
     cwd: ROOT,
     detached: true,
@@ -640,6 +648,7 @@ Locator options:
 
 Examples:
   node tools/playwright/cli.js session start --name work --headless false
+  node tools/playwright/cli.js session start --name work --headless false --executable-path /usr/bin/google-chrome
   node tools/playwright/cli.js goto https://example.com --session work
   node tools/playwright/cli.js text --selector main --session work
   node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
@@ -662,6 +671,9 @@ async function runSessionServer(args) {
   const viewport = parseViewport(options.viewport);
   if (viewport) contextOptions.viewport = viewport;
   if (options["user-agent"] && options["user-agent"] !== true) contextOptions.userAgent = options["user-agent"];
+  if (options["executable-path"] && options["executable-path"] !== true) {
+    contextOptions["executable-path"] = options["executable-path"];
+  }
   const profile = options.profile && options.profile !== true ? options.profile : name;
   const profileDir = profilePath(profile);
   ensureDir(profileDir);
@@ -687,6 +699,7 @@ async function runSessionServer(args) {
     token,
     headless,
     profile,
+    executable_path: options["executable-path"] && options["executable-path"] !== true ? options["executable-path"] : null,
     started_at: new Date().toISOString(),
   };
   fs.writeFileSync(sessionPath(name), `${JSON.stringify(metadata, null, 2)}\n`, { mode: 0o600 });
