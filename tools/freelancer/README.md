@@ -57,6 +57,29 @@ node tools/freelancer/cli.js open <projectId-or-url>
 node tools/freelancer/cli.js profile
 ```
 
+### Profile skills
+
+Freelancer's API calls profile skills `jobs`. The CLI exposes them as
+`profile-skills` because that matches the website wording.
+
+```bash
+# List current profile skills
+node tools/freelancer/cli.js profile-skills list
+
+# Add skills by Freelancer job/skill ID
+node tools/freelancer/cli.js profile-skills add 2894 2916 2925
+
+# Remove skills by Freelancer job/skill ID
+node tools/freelancer/cli.js profile-skills remove 962 301
+
+# Replace the entire profile skill list
+node tools/freelancer/cli.js profile-skills set 7 31 500 1087
+```
+
+`add`, `remove`, and `set` change your Freelancer profile. Freelancer limits the
+number of selected profile skills; if `add` would exceed the limit, remove less
+relevant skills first or use `set` with the exact final list.
+
 ### Look up a user/client
 
 ```bash
@@ -159,5 +182,6 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
 - `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
+- `profile-skills add`, `profile-skills remove`, and `profile-skills set` update profile skills and require explicit user intent plus user OAuth
 - `services`, `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
 - `notifications` is implemented, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable

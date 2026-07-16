@@ -263,6 +263,58 @@ async function apiPost(pathname, body) {
   return parsed;
 }
 
+async function apiPut(pathname, body) {
+  const config = requireConfig({ noSecret: true });
+  const accessToken = await getAccessToken();
+  const url = new URL(pathname, config.baseUrl);
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Freelancer-OAuth-V1": accessToken,
+      "User-Agent": "personal-toolset freelancer-cli",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = { raw: text };
+  }
+  if (!res.ok || parsed.status === "error") {
+    throw new Error(`API request failed (${res.status}): ${JSON.stringify(parsed, null, 2)}`);
+  }
+  return parsed;
+}
+
+async function apiDelete(pathname, body) {
+  const config = requireConfig({ noSecret: true });
+  const accessToken = await getAccessToken();
+  const url = new URL(pathname, config.baseUrl);
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      "Freelancer-OAuth-V1": accessToken,
+      "User-Agent": "personal-toolset freelancer-cli",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = { raw: text };
+  }
+  if (!res.ok || parsed.status === "error") {
+    throw new Error(`API request failed (${res.status}): ${JSON.stringify(parsed, null, 2)}`);
+  }
+  return parsed;
+}
+
 async function apiGet(pathname, params = {}) {
   const config = requireConfig({ noSecret: true });
   const accessToken = await getAccessToken();
@@ -463,7 +515,7 @@ async function getPublicUser(identifier) {
     employer_reputation: true,
     status: true,
     location_details: true,
-    job_details: true,
+    jobs: true,
   });
   const users = body.result?.users || {};
   return users[String(identifier)] || Object.values(users)[0];
@@ -521,6 +573,61 @@ async function profile() {
   const self = body.result || body;
   const publicUser = self.id ? await getPublicUser(self.id) : null;
   printUser({ ...self, ...(publicUser || {}) }, { email: self.email });
+}
+
+function parseJobIds(values) {
+  const jobIds = values.map((value) => Number(value));
+  const invalid = values.filter((value, index) => !Number.isInteger(jobIds[index]) || jobIds[index] <= 0);
+  if (invalid.length) {
+    throw new Error(`Skill/job IDs must be positive integers. Invalid: ${invalid.join(", ")}`);
+  }
+  return jobIds;
+}
+
+async function profileSkills(args) {
+  const [action, ...values] = args;
+  if (!action || action === "list") {
+    const accessToken = await getAccessToken();
+    const config = requireConfig({ noSecret: true });
+    const url = new URL("/api/users/0.1/self/", config.baseUrl);
+    url.searchParams.set("jobs", "true");
+    const res = await fetch(url, {
+      headers: {
+        "Freelancer-OAuth-V1": accessToken,
+        "User-Agent": "personal-toolset freelancer-cli",
+      },
+    });
+    const text = await res.text();
+    const body = text ? JSON.parse(text) : {};
+    if (!res.ok || body.status === "error") {
+      throw new Error(`Profile skills request failed (${res.status}): ${JSON.stringify(body)}`);
+    }
+    const self = body.result || body;
+    const jobs = self.jobs || [];
+    if (!jobs.length) {
+      console.log("No profile skills returned by API.");
+      return;
+    }
+    jobs.forEach((job) => {
+      console.log(`${job.id}: ${job.name}`);
+    });
+    return;
+  }
+
+  if (!["add", "remove", "set"].includes(action) || !values.length) {
+    throw new Error("Usage: node tools/freelancer/cli.js profile-skills <list|add|remove|set> [jobId ...]");
+  }
+
+  const jobIds = parseJobIds(values);
+  const payload = { "jobs[]": jobIds };
+  const endpoint = "/api/users/0.1/self/jobs";
+  const body =
+    action === "add" ? await apiPost(endpoint, payload) :
+    action === "remove" ? await apiDelete(endpoint, payload) :
+    await apiPut(endpoint, payload);
+
+  console.log(`Profile skills ${action} request succeeded.`);
+  console.log(JSON.stringify(body.result || body, null, 2));
 }
 
 async function getUser(args) {
@@ -879,6 +986,7 @@ Usage:
   node tools/freelancer/cli.js project <projectId>
   node tools/freelancer/cli.js open <projectId-or-url>
   node tools/freelancer/cli.js profile
+  node tools/freelancer/cli.js profile-skills <list|add|remove|set> [jobId ...]
   node tools/freelancer/cli.js user <userId-or-username>
   node tools/freelancer/cli.js reviews <projectId>
   node tools/freelancer/cli.js bids [projectId] [--limit 10]
@@ -898,6 +1006,7 @@ Examples:
   node tools/freelancer/cli.js search "node.js API" --limit 20 --full-description
   node tools/freelancer/cli.js project 40458235
   node tools/freelancer/cli.js profile
+  node tools/freelancer/cli.js profile-skills add 2894 2916 2925 2926 2986
   node tools/freelancer/cli.js user 12345678
   node tools/freelancer/cli.js user liuniu
   node tools/freelancer/cli.js reviews 40458235
@@ -927,6 +1036,7 @@ async function main() {
   if (command === "project") return project(args);
   if (command === "open") return openProject(args);
   if (command === "profile") return profile();
+  if (command === "profile-skills") return profileSkills(args);
   if (command === "user") return getUser(args);
   if (command === "reviews") return reviews(args);
   if (command === "bids") return bids(args);

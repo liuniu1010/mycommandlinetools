@@ -430,9 +430,9 @@ Tool notes:
 - Uses the official Freelancer.com API, not website scraping.
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
-- Supports read-only project search/detail, profile and user lookup, portfolio reads, reviews, bid reads, contests, services, messages, project messages, milestone payment reads, and milestone request reads.
+- Supports read-only project search/detail, profile and user lookup, profile skill reads, portfolio reads, reviews, bid reads, contests, services, messages, project messages, milestone payment reads, and milestone request reads.
 - Implements notifications, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable.
-- Supports bid submission and milestone payment request submission as side-effecting commands; confirm proposal or milestone details before using them.
+- Supports bid submission, profile skill updates, and milestone payment request submission as side-effecting commands; confirm proposal, profile skill, or milestone details before using them.
 - Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
 
 Configure credentials:
@@ -474,6 +474,7 @@ Read profile, client, review, bid, and milestone information:
 
 ```bash
 node tools/freelancer/cli.js profile
+node tools/freelancer/cli.js profile-skills list
 node tools/freelancer/cli.js user <userId>
 node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]
 node tools/freelancer/cli.js reviews <projectId>
@@ -486,6 +487,16 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 `milestone-requests` reads milestone payment requests. Freelancer's API is most reliable when filtering by bid ID; filtering only by project may be denied.
 
 `request-milestone` asks the client to create/fund a milestone payment for your bid. It changes remote account/project state, so confirm the exact project, bid, amount, and description before using it.
+
+Update profile skills:
+
+```bash
+node tools/freelancer/cli.js profile-skills add <jobId> [jobId ...]
+node tools/freelancer/cli.js profile-skills remove <jobId> [jobId ...]
+node tools/freelancer/cli.js profile-skills set <jobId> [jobId ...]
+```
+
+Freelancer's API calls profile skills `jobs`, so these commands use Freelancer job/skill IDs. `add`, `remove`, and `set` update your public Freelancer profile; confirm the exact skills before using them. Freelancer enforces a maximum number of selected skills, so remove lower-priority skills before adding new ones when the profile is full.
 
 Submit a bid:
 
