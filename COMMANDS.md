@@ -504,6 +504,18 @@ Submit a bid:
 node tools/freelancer/cli.js bid <projectId> --amount 150 --period 7 --description "I can build this"
 ```
 
+For fixed-price bids, `--milestone-percentage` sets the bid percentage field but
+does not guarantee the website-style milestone payment schedule row exists.
+After a CLI bid submission, verify milestone requests:
+
+```bash
+node tools/freelancer/cli.js milestone-requests --bid <bidId>
+```
+
+If no milestone request is returned and Freelancer's website requires a
+milestone payment row, edit the bid on Freelancer.com and add the milestone
+description and amount manually.
+
 Search contests and inspect account activity:
 
 ```bash

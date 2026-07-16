@@ -110,6 +110,19 @@ node tools/freelancer/cli.js bid <projectId> --amount 150 --period 7 --descripti
 
 Options: `--amount N`, `--period <days>`, `--description "text"`, `--milestone-percentage N`
 
+`--milestone-percentage` sets the bid's milestone percentage field, but the
+public API does not expose the same bid-time milestone payment schedule rows
+shown on Freelancer's website. After submitting a fixed-price bid through the
+CLI, check whether a milestone request/payment row exists:
+
+```bash
+node tools/freelancer/cli.js milestone-requests --bid <bidId>
+```
+
+If no milestone request is returned and the website requires a milestone payment
+row, edit the bid on Freelancer.com and set the milestone description and amount
+manually.
+
 ### Search contests
 
 ```bash
@@ -181,6 +194,7 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - Tokens stored in `tools/freelancer/.token.json` (mode 0600)
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
 - `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
+- `bid --milestone-percentage` does not guarantee a website-style milestone payment row exists; verify with `milestone-requests --bid <bidId>` and use the website when needed
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
 - `profile-skills add`, `profile-skills remove`, and `profile-skills set` update profile skills and require explicit user intent plus user OAuth
 - `services`, `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access

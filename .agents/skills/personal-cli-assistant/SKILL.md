@@ -222,6 +222,7 @@ Treat these as side-effecting and require explicit user permission before execut
 For every Google Drive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Permanent delete must be explicitly confirmed as permanent.
 For every OneDrive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Delete must be explicitly confirmed.
 For every Freelancer profile skill update, ask for user permission first. Permission must name whether skills will be added, removed, or replaced, and list the skill names or Freelancer job/skill IDs.
+After submitting a fixed-price Freelancer bid through the CLI, tell the user that `--milestone-percentage` only sets the bid percentage field and may not create the website-style milestone payment row. Run `node tools/freelancer/cli.js milestone-requests --bid <bidId>` when a bid ID is available, and notify the user to edit the bid on Freelancer.com manually if no milestone request/payment row is returned.
 
 Authentication commands are expected to start a localhost OAuth callback server and may need browser interaction:
 
