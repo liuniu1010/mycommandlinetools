@@ -661,7 +661,15 @@ async function bids(args) {
   const options = parseOptions(args);
   const projectId = options._[0];
   const params = { limit: Math.min(Number(options.limit || 10), 100), job_details: true };
-  if (projectId) params.projects = [projectId];
+  if (projectId) {
+    params.projects = [projectId];
+  } else {
+    const bidderId = readToken().account_id;
+    if (!bidderId) {
+      throw new Error("Could not determine bidder_id. Run `node tools/freelancer/cli.js profile` first.");
+    }
+    params.bidders = [bidderId];
+  }
   const body = await apiGet("/api/projects/0.1/bids/", params);
   const list = body.result?.bids || body.result || [];
   if (!list.length) {
