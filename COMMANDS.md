@@ -336,7 +336,7 @@ Tool notes:
 - Uses OAuth 2.0 for a public Notion connection.
 - Saves OAuth tokens locally to `tools/notion/.token.json`, including Notion workspace and bot metadata when available.
 - The target pages and databases must be selected during OAuth authorization.
-- Prints JSON responses so Codex CLI, Claude Code, and shell scripts can parse output.
+- API commands print JSON responses so Codex CLI, Claude Code, and shell scripts can parse output; `auth` and `help` print human-readable guidance.
 
 Configure credentials:
 
@@ -373,6 +373,13 @@ node tools/notion/cli.js get-page <pageId-or-url>
 node tools/notion/cli.js get-database <databaseId-or-url>
 ```
 
+Create or update a database:
+
+```bash
+node tools/notion/cli.js create-database --page-id <pageId> --title "Name" --properties-json '{...}'
+node tools/notion/cli.js update-database <databaseId-or-url> --title "New name"
+```
+
 Query a database:
 
 ```bash
@@ -392,6 +399,9 @@ Archive a page:
 ```bash
 node tools/notion/cli.js archive-page <pageId-or-url>
 ```
+
+`delete-page` is an alias for `archive-page`; both archive rather than
+permanently delete the page.
 
 Work with blocks:
 
@@ -432,7 +442,7 @@ Tool notes:
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
 - Supports read-only project search/detail, profile and user lookup, profile skill reads, portfolio reads, reviews, bid reads, contests, services, messages, project messages, milestone payment reads, and milestone request reads.
 - Implements notifications, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable.
-- Supports bid submission, profile skill updates, and milestone payment request submission as side-effecting commands; confirm proposal, profile skill, or milestone details before using them.
+- Supports bid submission/retraction, profile skill updates, and milestone payment request submission as side-effecting commands; confirm the bid, profile skill, or milestone details before using them.
 - Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
 
 Configure credentials:
@@ -443,6 +453,7 @@ FREELANCER_CLIENT_SECRET=your_client_secret
 FREELANCER_CALLBACK_URL=http://localhost:3000/callback
 FREELANCER_SCOPE=basic fln:user:email
 FREELANCER_ADVANCED_SCOPES=
+FREELANCER_BASE_URL=https://www.freelancer.com
 ```
 
 Authenticate:
@@ -481,12 +492,24 @@ node tools/freelancer/cli.js reviews <projectId>
 node tools/freelancer/cli.js bids [projectId] [--limit 10]
 node tools/freelancer/cli.js milestones <projectId>
 node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--offset 0]
-node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount 320 --description "Working bot and setup guide"
 ```
 
 `milestone-requests` reads milestone payment requests. Freelancer's API is most reliable when filtering by bid ID; filtering only by project may be denied.
 
 `request-milestone` asks the client to create/fund a milestone payment for your bid. It changes remote account/project state, so confirm the exact project, bid, amount, and description before using it.
+
+```bash
+node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount 320 --description "Working bot and setup guide"
+```
+
+`retract-bid` removes your bid from an open project; `withdraw-bid` is an alias.
+It changes remote account state, so confirm the exact bid ID before using it.
+Freelancer does not restore the consumed bid allowance or refund paid bid
+upgrades after retraction.
+
+```bash
+node tools/freelancer/cli.js retract-bid <bidId>
+```
 
 Update profile skills:
 
@@ -564,6 +587,12 @@ Use extra filters:
 
 ```bash
 node tools/linkedin/cli.js search "ai agent" --workplace remote,hybrid --type contract --experience senior
+```
+
+Open the LinkedIn developer apps page:
+
+```bash
+node tools/linkedin/cli.js developer
 ```
 
 ## Gmail
@@ -781,6 +810,15 @@ node tools/playwright/cli.js fill --label Email --value user@example.com --sessi
 node tools/playwright/cli.js wait --text Dashboard --session work
 ```
 
+Use keyboard, checkbox, and selection controls:
+
+```bash
+node tools/playwright/cli.js press Enter --session work
+node tools/playwright/cli.js check --label "Accept terms" --session work
+node tools/playwright/cli.js uncheck --label "Subscribe" --session work
+node tools/playwright/cli.js select --label Country --value NZ --session work
+```
+
 Target iframes or repeated elements:
 
 ```bash
@@ -792,6 +830,7 @@ Use one-shot read mode without a session:
 
 ```bash
 node tools/playwright/cli.js text --url https://example.com --selector main
+node tools/playwright/cli.js html --url https://example.com --selector main
 node tools/playwright/cli.js links --url https://example.com --limit 20
 node tools/playwright/cli.js exists --url https://example.com --text "Example Domain"
 node tools/playwright/cli.js read-keylines --url https://example.com --pattern "Example"

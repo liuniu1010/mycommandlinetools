@@ -1,6 +1,6 @@
 # Upwork CLI
 
-Personal CLI for Upwork OAuth and job search.
+Personal CLI for Upwork OAuth, job search and lookup, and browser opening.
 
 ## Setup
 
@@ -21,6 +21,7 @@ For step-by-step credential setup, see [../../OAUTH_SETUP.md#upwork](../../OAUTH
 node tools/upwork/cli.js auth
 node tools/upwork/cli.js search "node.js openai api" --limit 20
 node tools/upwork/cli.js search "aws lambda" --verified-only
+node tools/upwork/cli.js job <jobId>
 node tools/upwork/cli.js open <jobId-or-ciphertext>
 ```
 

@@ -6,14 +6,16 @@ This repository is a personal Node.js command-line toolset. Source code lives in
 
 - `tools/upwork/` for Upwork OAuth, job search, job lookup, and browser open commands.
 - `tools/gmail/` for Gmail OAuth, labels, message reads, attachments, and sending mail.
+- `tools/outlook/` for Outlook OAuth through Microsoft Graph, folders, message reads, attachments, moves, and sending mail.
 - `tools/gcalendar/` for Google Calendar OAuth, calendar listing, event reads, and event CRUD.
 - `tools/gdrive/` for Google Drive OAuth, file search, metadata reads, downloads, exports, uploads, file management, and browser open commands.
 - `tools/onedrive/` for OneDrive OAuth through Microsoft Graph, account reads, file search, metadata reads, downloads, uploads, file management, and browser open commands.
-- `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, user/profile/review reads, bid and milestone reads, bid submission, contests, messages, notifications, and browser open commands.
+- `tools/notion/` for Notion OAuth, page/database/block/comment/user reads, writes, resolution, and database summaries.
+- `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, user/profile/review reads, bid and milestone reads, bid submission/retraction, contests, messages, notifications, and browser open commands.
 - `tools/linkedin/` for LinkedIn Jobs search URL generation and browser open commands. It must not scrape LinkedIn or automate a logged-in account.
 - `tools/playwright/` for Playwright-backed browser automation, including persistent Chromium/system-Chrome sessions, one-shot page reads, screenshots, tab switching, iframe targeting, page/form inspection, custom control handling, form filling, submit-result checks, and JSON flow execution.
 
-Each tool has a local `README.md`. Root-level command examples are documented in `COMMANDS.md`. Build and verification helpers live in `scripts/`. Generated output goes to `dist/`; downloaded Gmail attachments commonly go to `downloads/`. Do not edit generated or downloaded output by hand.
+Each tool has a local `README.md`. Root-level command examples are documented in `COMMANDS.md`. Build and verification helpers live in `scripts/`. Generated output goes to `dist/`; downloaded files and browser artifacts commonly go to `downloads/`. Do not edit generated or downloaded output by hand.
 
 Assistant-specific files are owned by their matching CLI. Claude Code should update only Claude-related files such as `CLAUDE.md` and `.claude/`. Codex CLI should update only Codex-related files such as `AGENTS.md`, `.agents/`, and `.codex/`. Do not update another assistant CLI's files unless the user explicitly asks for that specific file.
 
@@ -34,7 +36,7 @@ Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search 
 
 Use CommonJS, `"use strict";`, 2-space indentation, double quotes, and semicolons. Avoid tabs and trailing whitespace. CLI files should keep executable shebangs. Use `camelCase` for functions and variables, `UPPER_SNAKE_CASE` for constants, and lowercase dash-separated names for tool directories.
 
-Prefer built-in Node APIs. Existing tools intentionally avoid runtime npm dependencies, including for HTTP, OAuth callback handling, `.env` parsing, option parsing, MIME helpers, and browser launching. Keep each CLI self-contained rather than introducing shared runtime modules unless the duplication becomes meaningfully hard to maintain.
+Prefer built-in Node APIs. Most tools intentionally avoid runtime npm dependencies, including for HTTP, OAuth callback handling, `.env` parsing, option parsing, MIME helpers, and browser launching. The Playwright CLI is the deliberate exception and uses the `playwright` package. Keep each CLI self-contained rather than introducing shared runtime modules unless the duplication becomes meaningfully hard to maintain.
 
 Existing CLIs use a repeated local pattern: load the root `.env`, parse positional args plus `--key value` flags, use native `fetch`, and open browser URLs through platform-specific commands. OAuth-based tools run a local callback server, store tokens in `tools/<tool>/.token.json`, and refresh access tokens when needed.
 

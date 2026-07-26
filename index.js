@@ -35,6 +35,10 @@ const tools = {
     command: "outlook-cli",
     path: path.join(__dirname, "tools", "outlook", "cli.js"),
   },
+  playwright: {
+    command: "playwright-cli",
+    path: path.join(__dirname, "tools", "playwright", "cli.js"),
+  },
   upwork: {
     command: "upwork-cli",
     path: path.join(__dirname, "tools", "upwork", "cli.js"),

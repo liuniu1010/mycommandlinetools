@@ -39,8 +39,8 @@ node tools/linkedin/cli.js developer
 
 - `--location "Auckland, New Zealand"`
 - `--date day|week|month`
-- `--workplace remote|hybrid|onsite`
-- `--type full-time|part-time|contract|temporary|internship`
+- `--workplace remote|hybrid|onsite` (`--remote` is an alias for `--workplace`)
+- `--type full-time|part-time|contract|temporary|internship|volunteer|other`
 - `--experience entry|associate|mid|senior|director|executive`
 - `--start 25` for LinkedIn result pagination offset
-- `--open` to launch the browser
+- `--open` or `--o` to launch the browser

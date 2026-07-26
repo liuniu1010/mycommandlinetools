@@ -70,6 +70,7 @@ For Google Calendar:
 GCALENDAR_CLIENT_ID=your_google_oauth_client_id
 GCALENDAR_CLIENT_SECRET=your_google_oauth_client_secret
 GCALENDAR_CALLBACK_URL=http://localhost:3000/callback
+GCALENDAR_SCOPES=https://www.googleapis.com/auth/calendar
 ```
 
 For Google Drive:
@@ -268,7 +269,8 @@ http://localhost:3000/callback
 ```
 
 5. Choose the minimum scopes needed. This CLI supports project search/detail,
-   profile and user reads, reviews, bid reads/submission, contests, messages,
+   profile and user reads, profile skill management, portfolio and service
+   reads, reviews, bid reads/submission/retraction, contests, messages,
    notifications, and milestones. `basic fln:user:email` is the default
    repository example so account metadata can be saved when the API permits it.
    Bid submission and account-specific reads may require additional Freelancer
@@ -281,6 +283,7 @@ FREELANCER_CLIENT_SECRET=your_client_secret
 FREELANCER_CALLBACK_URL=http://localhost:3000/callback
 FREELANCER_SCOPE=basic fln:user:email
 FREELANCER_ADVANCED_SCOPES=
+FREELANCER_BASE_URL=https://www.freelancer.com
 ```
 
 Then authenticate:

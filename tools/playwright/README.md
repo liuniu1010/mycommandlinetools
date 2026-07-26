@@ -66,6 +66,7 @@ headless and can be changed with `--headless false`.
 
 ```bash
 node tools/playwright/cli.js text --url https://example.com --selector main
+node tools/playwright/cli.js html --url https://example.com --selector main
 node tools/playwright/cli.js links --url https://example.com --limit 20
 node tools/playwright/cli.js exists --url https://example.com --text "Example Domain"
 node tools/playwright/cli.js screenshot --url https://example.com --out downloads/playwright/example.png

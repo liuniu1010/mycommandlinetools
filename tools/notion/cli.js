@@ -816,7 +816,7 @@ Usage:
   node tools/notion/cli.js get-page <pageIdOrUrl>
   node tools/notion/cli.js create-page --database-id <databaseId> --properties-json '{...}'
   node tools/notion/cli.js update-page <pageIdOrUrl> --properties-json '{...}'
-  node tools/notion/cli.js archive-page <pageIdOrUrl>
+  node tools/notion/cli.js archive-page <pageIdOrUrl>                 (alias: delete-page)
   node tools/notion/cli.js get-database <databaseIdOrUrl>
   node tools/notion/cli.js query-database <databaseIdOrUrl> [--filter-json '{...}'] [--sorts-json '[...]']
   node tools/notion/cli.js create-database --page-id <pageId> --title "Name" --properties-json '{...}'

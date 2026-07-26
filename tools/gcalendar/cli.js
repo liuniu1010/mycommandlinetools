@@ -56,7 +56,7 @@ function requireConfig() {
 
 function readToken() {
   if (!fs.existsSync(TOKEN_FILE)) {
-    throw new Error("No saved token. Run: npm run gcalendar:auth");
+    throw new Error("No saved token. Run: node tools/gcalendar/cli.js auth");
   }
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
@@ -118,7 +118,7 @@ async function getAccessToken() {
     return token.access_token;
   }
   if (!token.refresh_token) {
-    throw new Error("Saved token has no refresh token. Run: npm run gcalendar:auth");
+    throw new Error("Saved token has no refresh token. Run: node tools/gcalendar/cli.js auth");
   }
   const refreshed = await requestToken({
     grant_type: "refresh_token",
@@ -390,17 +390,17 @@ function parseOptions(args) {
 function help() {
   console.log(`
 Usage:
-  npm run gcalendar:auth
-  npm run gcalendar:calendars
-  npm run gcalendar:events -- [--calendar primary] [--from 2026-05-05T00:00:00+12:00] [--to 2026-05-06T00:00:00+12:00] [--limit 10]
-  node tools/gcalendar/cli.js add-event --summary "Title" --start 2026-05-05T10:00:00+12:00 --end 2026-05-05T10:30:00+12:00
-  node tools/gcalendar/cli.js update-event <eventId> --summary "New title"
-  node tools/gcalendar/cli.js delete-event <eventId>
+  node tools/gcalendar/cli.js auth
+  node tools/gcalendar/cli.js calendars
+  node tools/gcalendar/cli.js events [--calendar primary] [--from <date>] [--to <date>] [--query <text>] [--limit 10]
+  node tools/gcalendar/cli.js add-event --summary "Title" --start <date> --end <date> [--calendar primary] [--timezone <zone>] [--description <text>] [--location <text>]
+  node tools/gcalendar/cli.js update-event <eventId> [--calendar primary] [--summary <text>] [--start <date>] [--end <date>] [--timezone <zone>] [--description <text>] [--location <text>]
+  node tools/gcalendar/cli.js delete-event <eventId> [--calendar primary]
 
 Examples:
-  npm run gcalendar:auth
-  npm run gcalendar:calendars
-  npm run gcalendar:events -- --calendar primary --limit 20
+  node tools/gcalendar/cli.js auth
+  node tools/gcalendar/cli.js calendars
+  node tools/gcalendar/cli.js events --calendar primary --limit 20
   node tools/gcalendar/cli.js add-event --summary "Test" --start 2026-05-05T10:00:00+12:00 --end 2026-05-05T10:30:00+12:00 --description "Created from CLI"
   node tools/gcalendar/cli.js delete-event abc123
 `);

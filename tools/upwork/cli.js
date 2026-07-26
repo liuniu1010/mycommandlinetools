@@ -53,7 +53,7 @@ function requireConfig() {
 
 function readToken() {
   if (!fs.existsSync(TOKEN_FILE)) {
-    throw new Error("No saved token. Run: node upwork-cli.js auth");
+    throw new Error("No saved token. Run: node tools/upwork/cli.js auth");
   }
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
@@ -138,7 +138,7 @@ async function getAccessToken() {
     return token.access_token;
   }
   if (!token.refresh_token) {
-    throw new Error("Saved token has no refresh token. Run: node upwork-cli.js auth");
+    throw new Error("Saved token has no refresh token. Run: node tools/upwork/cli.js auth");
   }
   const refreshed = await requestToken({
     grant_type: "refresh_token",
@@ -302,7 +302,7 @@ async function search(args) {
   const options = parseOptions(args);
   const keywords = options._.join(" ").trim();
   if (!keywords) {
-    throw new Error('Usage: node upwork-cli.js search "node.js openai" [--limit 20] [--offset 0]');
+    throw new Error('Usage: node tools/upwork/cli.js search "node.js openai" [--limit 20] [--offset 0]');
   }
 
   const limit = Math.min(Math.max(Number(options.limit || 10), 1), 50);
@@ -371,7 +371,7 @@ async function search(args) {
 
 async function job(args) {
   const id = args[0];
-  if (!id) throw new Error("Usage: node upwork-cli.js job <jobId>");
+  if (!id) throw new Error("Usage: node tools/upwork/cli.js job <jobId>");
 
   const query = `
     query marketplaceJobPosting($id: ID!) {
@@ -392,7 +392,7 @@ async function job(args) {
 
 function openJob(args) {
   const id = args[0];
-  if (!id) throw new Error("Usage: node upwork-cli.js open <jobId-or-ciphertext>");
+  if (!id) throw new Error("Usage: node tools/upwork/cli.js open <jobId-or-ciphertext>");
   const url = `https://www.upwork.com/jobs/~${id}`;
   console.log(url);
   openBrowser(url);
@@ -421,14 +421,14 @@ function parseOptions(args) {
 function help() {
   console.log(`
 Usage:
-  npm run upwork:auth
-  npm run upwork:search -- "keywords" [--limit 10] [--offset 0] [--sort recency|relevance] [--verified-only]
+  node tools/upwork/cli.js auth
+  node tools/upwork/cli.js search "keywords" [--limit 10] [--offset 0] [--sort recency|relevance] [--verified-only]
   node tools/upwork/cli.js job <jobId>
   node tools/upwork/cli.js open <jobId-or-ciphertext>
 
 Examples:
-  npm run upwork:auth
-  npm run upwork:search -- "node.js openai api" --limit 20 --verified-only
+  node tools/upwork/cli.js auth
+  node tools/upwork/cli.js search "node.js openai api" --limit 20 --verified-only
   node tools/upwork/cli.js open 0123456789abcdef
 `);
 }

@@ -59,7 +59,7 @@ function requireConfig() {
 
 function readToken() {
   if (!fs.existsSync(TOKEN_FILE)) {
-    throw new Error("No saved token. Run: npm run gmail:auth");
+    throw new Error("No saved token. Run: node tools/gmail/cli.js auth");
   }
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
@@ -115,7 +115,7 @@ async function getAccessToken() {
     return token.access_token;
   }
   if (!token.refresh_token) {
-    throw new Error("Saved token has no refresh token. Run: npm run gmail:auth");
+    throw new Error("Saved token has no refresh token. Run: node tools/gmail/cli.js auth");
   }
   const refreshed = await requestToken({
     grant_type: "refresh_token",
@@ -566,19 +566,19 @@ function parseOptions(args) {
 function help() {
   console.log(`
 Usage:
-  npm run gmail:auth
-  npm run gmail:labels
-  npm run gmail:list -- [--query "from:client@example.com"] [--limit 10] [--label INBOX]
+  node tools/gmail/cli.js auth
+  node tools/gmail/cli.js labels
+  node tools/gmail/cli.js list [--query "from:client@example.com"] [--limit 10] [--label INBOX]
   node tools/gmail/cli.js read <messageId>
   node tools/gmail/cli.js move <messageId> --from "to do list" --to EGGS [--create-label]
   node tools/gmail/cli.js attachments <messageId>
   node tools/gmail/cli.js download-attachments <messageId> [--out downloads/gmail]
-  node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file]
+  node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file ...]
 
 Examples:
-  npm run gmail:auth
-  npm run gmail:labels
-  npm run gmail:list -- --query "is:unread newer_than:7d" --limit 10
+  node tools/gmail/cli.js auth
+  node tools/gmail/cli.js labels
+  node tools/gmail/cli.js list --query "is:unread newer_than:7d" --limit 10
   node tools/gmail/cli.js move 18c123abc --from "to do list" --to EGGS
   node tools/gmail/cli.js attachments 18c123abc
   node tools/gmail/cli.js download-attachments 18c123abc --out downloads/gmail

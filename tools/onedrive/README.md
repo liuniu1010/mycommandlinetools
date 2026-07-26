@@ -22,9 +22,7 @@ Microsoft accounts and work or school OneDrive accounts when the app
 registration allows them.
 
 For step-by-step Microsoft credential setup, see
-[../../OAUTH_SETUP.md#microsoft-outlook-mail](../../OAUTH_SETUP.md#microsoft-outlook-mail).
-Use the `ONEDRIVE_*` environment variables and file permissions instead of the
-Outlook-specific values.
+[../../OAUTH_SETUP.md#microsoft-onedrive](../../OAUTH_SETUP.md#microsoft-onedrive).
 
 ## Usage
 

@@ -755,6 +755,11 @@ Examples:
   node tools/gdrive/cli.js move 1abcFileId --to 1targetFolderId
   node tools/gdrive/cli.js copy 1abcFileId --name "Copy of report.pdf"
   node tools/gdrive/cli.js trash 1abcFileId
+
+Notes:
+  files, list, and search are aliases. get and read are aliases.
+  mkdir/create-folder, update-content/replace, and update/rename are aliases.
+  --query and --q are aliases.
 `);
 }
 

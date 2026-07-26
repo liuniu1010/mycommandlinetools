@@ -54,7 +54,7 @@ function requireConfig(options = {}) {
 
 function readToken() {
   if (!fs.existsSync(TOKEN_FILE)) {
-    throw new Error("No saved token. Run: npm run freelancer:auth");
+    throw new Error("No saved token. Run: node tools/freelancer/cli.js auth");
   }
   return JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
 }
@@ -130,7 +130,7 @@ async function getAccessToken() {
     return token.access_token;
   }
   if (!token.refresh_token) {
-    throw new Error("Saved token has expired and has no refresh token. Run: npm run freelancer:auth");
+    throw new Error("Saved token has expired and has no refresh token. Run: node tools/freelancer/cli.js auth");
   }
   const refreshed = await requestToken({
     grant_type: "refresh_token",
@@ -263,18 +263,25 @@ async function apiPost(pathname, body) {
   return parsed;
 }
 
-async function apiPut(pathname, body) {
+async function apiPut(pathname, body, params = {}) {
   const config = requireConfig({ noSecret: true });
   const accessToken = await getAccessToken();
   const url = new URL(pathname, config.baseUrl);
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null || value === false || value === "") continue;
+    url.searchParams.set(key, String(value));
+  }
+  const headers = {
+    "Freelancer-OAuth-V1": accessToken,
+    "User-Agent": "personal-toolset freelancer-cli",
+  };
+  const request = { method: "PUT", headers };
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    request.body = JSON.stringify(body);
+  }
   const res = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Freelancer-OAuth-V1": accessToken,
-      "User-Agent": "personal-toolset freelancer-cli",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+    ...request,
   });
   const text = await res.text();
   let parsed;
@@ -713,6 +720,16 @@ async function bid(args) {
   console.log(JSON.stringify(result, null, 2));
 }
 
+async function retractBid(args) {
+  const options = parseOptions(args);
+  const bidId = options._[0];
+  if (!bidId || !/^\d+$/.test(String(bidId))) {
+    throw new Error("Usage: node tools/freelancer/cli.js retract-bid <bidId>");
+  }
+  await apiPut(`/api/projects/0.1/bids/${bidId}/`, undefined, { action: "retract" });
+  console.log(`Bid ${bidId} retracted successfully.`);
+}
+
 async function contests(args) {
   const options = parseOptions(args);
   const query = options._.join(" ").trim();
@@ -990,7 +1007,7 @@ function help() {
   console.log(`
 Usage:
   node tools/freelancer/cli.js auth [--client-credentials]
-  node tools/freelancer/cli.js search "keywords" [--limit 10] [--offset 0] [--sort time_updated] [--full-description] [--user-details]
+  node tools/freelancer/cli.js search "keywords" [--limit 10] [--offset 0] [--sort time_updated] [--full-description] [--user-details] [--location-details]
   node tools/freelancer/cli.js project <projectId>
   node tools/freelancer/cli.js open <projectId-or-url>
   node tools/freelancer/cli.js profile
@@ -998,7 +1015,8 @@ Usage:
   node tools/freelancer/cli.js user <userId-or-username>
   node tools/freelancer/cli.js reviews <projectId>
   node tools/freelancer/cli.js bids [projectId] [--limit 10]
-  node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"
+  node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text" [--milestone-percentage <n>]
+  node tools/freelancer/cli.js retract-bid <bidId>                    (alias: withdraw-bid)
   node tools/freelancer/cli.js contests ["keywords"] [--limit 10] [--offset 0] [--full-description]
   node tools/freelancer/cli.js services [serviceId ...] [--owner <userId>] [--limit 10] [--offset 0] [--reviews] [--json]
   node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]
@@ -1020,6 +1038,7 @@ Examples:
   node tools/freelancer/cli.js reviews 40458235
   node tools/freelancer/cli.js bids --limit 5
   node tools/freelancer/cli.js bid 40458235 --amount 150 --period 7 --description "I can build this"
+  node tools/freelancer/cli.js retract-bid 487249873
   node tools/freelancer/cli.js contests "logo design" --limit 10
   node tools/freelancer/cli.js services
   node tools/freelancer/cli.js services 1 --json
@@ -1049,6 +1068,7 @@ async function main() {
   if (command === "reviews") return reviews(args);
   if (command === "bids") return bids(args);
   if (command === "bid") return bid(args);
+  if (command === "retract-bid" || command === "withdraw-bid") return retractBid(args);
   if (command === "contests") return contests(args);
   if (command === "services") return services(args);
   if (command === "portfolios") return portfolios(args);

@@ -55,6 +55,13 @@ node tools/notion/cli.js get-page <pageId-or-url>
 node tools/notion/cli.js get-database <databaseId-or-url>
 ```
 
+Create or update a database:
+
+```bash
+node tools/notion/cli.js create-database --page-id <pageId> --title "Name" --properties-json '{...}'
+node tools/notion/cli.js update-database <databaseId-or-url> --title "New name"
+```
+
 Query a database:
 
 ```bash
@@ -74,6 +81,9 @@ Archive a page:
 ```bash
 node tools/notion/cli.js archive-page <pageId-or-url>
 ```
+
+`delete-page` is an alias for `archive-page`; both archive rather than
+permanently delete the page.
 
 Work with blocks:
 
@@ -100,5 +110,5 @@ node tools/notion/cli.js query-database-summary <databaseId-or-url> --summary-js
 ```
 
 For larger payloads, write JSON to a file and pass it with `--json-file`.
-All commands print JSON responses so Codex CLI, Claude Code, and shell scripts
-can parse results reliably.
+API commands print JSON responses so Codex CLI, Claude Code, and shell scripts
+can parse results reliably. `auth` and `help` print human-readable guidance.

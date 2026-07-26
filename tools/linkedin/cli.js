@@ -122,15 +122,15 @@ function openDeveloperApps() {
 function help() {
   console.log(`
 Usage:
-  npm run linkedin:search -- "keywords" [--location "Auckland, New Zealand"] [--open]
+  node tools/linkedin/cli.js search "keywords" [--location "Auckland, New Zealand"] [--open]
   node tools/linkedin/cli.js search "keywords" [--date day|week|month]
   node tools/linkedin/cli.js search "keywords" [--workplace remote|hybrid|onsite]
-  node tools/linkedin/cli.js search "keywords" [--type full-time|part-time|contract|temporary|internship]
+  node tools/linkedin/cli.js search "keywords" [--type full-time|part-time|contract|temporary|internship|volunteer|other]
   node tools/linkedin/cli.js search "keywords" [--experience entry|associate|mid|senior|director|executive]
   node tools/linkedin/cli.js developer
 
 Examples:
-  npm run linkedin:search -- "java spring boot" --location "Auckland, New Zealand" --date week --open
+  node tools/linkedin/cli.js search "java spring boot" --location "Auckland, New Zealand" --date week --open
   node tools/linkedin/cli.js search "ai agent" --workplace remote,hybrid --type contract --experience senior
 
 Notes:

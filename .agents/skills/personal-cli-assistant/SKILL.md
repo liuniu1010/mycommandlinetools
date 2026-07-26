@@ -45,7 +45,7 @@ For read-only requests, reasonable defaults are allowed:
 - "Find this in OneDrive" can use read-only OneDrive search by file name or indexed content.
 - Job search requests should use read-only search/URL commands first.
 - Browser inspection can use Playwright one-shot read commands first, such as
-  `text --url`, `links --url`, `exists --url`, `read-keylines --url`,
+  `text --url`, `html --url`, `links --url`, `exists --url`, `read-keylines --url`,
   `inspect-form --url`, `page-state --url`, or `screenshot --url`.
 - Multi-step browser work should use a named Playwright session. Prefer headed
   sessions when the user needs to log in, solve MFA/CAPTCHA, use a password
@@ -101,6 +101,10 @@ node tools/onedrive/cli.js download <itemId> --out downloads/onedrive
 
 Use OneDrive `--orderBy` only with folder/listing requests, not search. OneDrive aliases include `me` for `account`, `read` for `get`, `create-folder` for `mkdir`, `replace` for `update-content`, `rename` for `update`, and `files`/`list`/`search` for the same file-listing command.
 
+Google Drive aliases include `read` for `get`, `create-folder` for `mkdir`,
+`replace` for `update-content`, `rename` for `update`, and
+`files`/`list`/`search` for the same file-listing command.
+
 Notion:
 
 ```bash
@@ -142,6 +146,7 @@ node tools/playwright/cli.js goto https://example.com --session work
 node tools/playwright/cli.js tabs --session work
 node tools/playwright/cli.js tab use --index 1 --session work
 node tools/playwright/cli.js text --selector main --session work
+node tools/playwright/cli.js html --selector main --session work
 node tools/playwright/cli.js page-state --session work --json
 node tools/playwright/cli.js read-keylines --session work --pattern "submitted|error|Connects" --context 1
 node tools/playwright/cli.js controls --session work --pattern "submit|apply|proposal" --json
@@ -173,6 +178,8 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/gcalendar/cli.js update-event ...`
 - `node tools/gcalendar/cli.js delete-event ...`
 - `node tools/gdrive/cli.js mkdir ...`
+- `node tools/gdrive/cli.js download ...`
+- `node tools/gdrive/cli.js open ...`
 - `node tools/gdrive/cli.js upload ...`
 - `node tools/gdrive/cli.js update-content ...`
 - `node tools/gdrive/cli.js update ...`
@@ -183,6 +190,8 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/gdrive/cli.js untrash ...`
 - `node tools/gdrive/cli.js delete ...`
 - `node tools/onedrive/cli.js mkdir ...`
+- `node tools/onedrive/cli.js download ...`
+- `node tools/onedrive/cli.js open ...`
 - `node tools/onedrive/cli.js upload ...`
 - `node tools/onedrive/cli.js update-content ...`
 - `node tools/onedrive/cli.js update ...`
@@ -194,16 +203,24 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/notion/cli.js create-page ...`
 - `node tools/notion/cli.js update-page ...`
 - `node tools/notion/cli.js archive-page ...`
+- `node tools/notion/cli.js delete-page ...` (alias for `archive-page`)
+- `node tools/notion/cli.js create-database ...`
+- `node tools/notion/cli.js update-database ...`
 - `node tools/notion/cli.js append-block-children ...`
 - `node tools/notion/cli.js update-block ...`
 - `node tools/notion/cli.js archive-block ...`
 - `node tools/notion/cli.js create-comment ...`
 - `node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"`
+- `node tools/freelancer/cli.js retract-bid <bidId>` (alias: `withdraw-bid`)
 - `node tools/freelancer/cli.js profile-skills add <jobId> [jobId ...]`
 - `node tools/freelancer/cli.js profile-skills remove <jobId> [jobId ...]`
 - `node tools/freelancer/cli.js profile-skills set <jobId> [jobId ...]`
 - `node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount <n> --description "text"`
-- `node tools/playwright/cli.js session start --headless false ...`
+- `node tools/playwright/cli.js session start ...`
+- `node tools/playwright/cli.js session stop ...`
+- `node tools/playwright/cli.js goto ...`
+- `node tools/playwright/cli.js tab use ...`
+- `node tools/playwright/cli.js flow ...` when any flow step changes browser or remote state
 - `node tools/playwright/cli.js click ...`
 - `node tools/playwright/cli.js fill ...`
 - `node tools/playwright/cli.js press ...`
@@ -216,12 +233,13 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/playwright/cli.js fill-textareas ...`
 - `node tools/playwright/cli.js submit-check ...`
 - `node tools/playwright/cli.js screenshot --out <file> ...`
-- Any command with `--open`, plus Upwork/Freelancer `open` and LinkedIn `developer`.
+- Any command with `--open`, plus Google Drive, OneDrive, Upwork, and Freelancer `open`, and LinkedIn `developer`.
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.
 
 For every Google Drive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Permanent delete must be explicitly confirmed as permanent.
 For every OneDrive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Delete must be explicitly confirmed.
 For every Freelancer profile skill update, ask for user permission first. Permission must name whether skills will be added, removed, or replaced, and list the skill names or Freelancer job/skill IDs.
+For every Freelancer bid retraction, confirm the exact bid ID and verify that the project is still open for bidding. Freelancer does not restore the consumed bid allowance or refund paid bid upgrades after retraction.
 After submitting a fixed-price Freelancer bid through the CLI, tell the user that `--milestone-percentage` only sets the bid percentage field and may not create the website-style milestone payment row. Run `node tools/freelancer/cli.js milestone-requests --bid <bidId>` when a bid ID is available, and notify the user to edit the bid on Freelancer.com manually if no milestone request/payment row is returned.
 
 Authentication commands are expected to start a localhost OAuth callback server and may need browser interaction:

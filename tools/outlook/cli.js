@@ -554,7 +554,7 @@ Usage:
   node tools/outlook/cli.js move <messageId> --from "Inbox" --to Archive [--create-label]
   node tools/outlook/cli.js attachments <messageId>
   node tools/outlook/cli.js download-attachments <messageId> [--out downloads/outlook]
-  node tools/outlook/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file]
+  node tools/outlook/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file ...]
 
 Examples:
   node tools/outlook/cli.js auth

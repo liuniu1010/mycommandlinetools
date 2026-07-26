@@ -12,6 +12,7 @@ FREELANCER_CLIENT_SECRET=your_client_secret
 FREELANCER_CALLBACK_URL=http://localhost:3000/callback
 FREELANCER_SCOPE=basic fln:user:email
 FREELANCER_ADVANCED_SCOPES=
+FREELANCER_BASE_URL=https://www.freelancer.com
 ```
 
 The callback URL must match the redirect URL configured for your Freelancer.com API app.
@@ -123,6 +124,18 @@ If no milestone request is returned and the website requires a milestone payment
 row, edit the bid on Freelancer.com and set the milestone description and amount
 manually.
 
+### Retract a bid
+
+```bash
+node tools/freelancer/cli.js retract-bid <bidId>
+```
+
+`withdraw-bid` is an alias for `retract-bid`. Retracting changes remote account
+state and requires explicit confirmation of the bid ID before use. Freelancer
+only allows retraction while the project is open for bidding. A retracted bid
+does not restore the consumed bid allowance, and paid bid upgrades are not
+refunded.
+
 ### Search contests
 
 ```bash
@@ -194,6 +207,7 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - Tokens stored in `tools/freelancer/.token.json` (mode 0600)
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
 - `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
+- `retract-bid` and `withdraw-bid` retract a proposal and require explicit user intent plus user OAuth
 - `bid --milestone-percentage` does not guarantee a website-style milestone payment row exists; verify with `milestone-requests --bid <bidId>` and use the website when needed
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
 - `profile-skills add`, `profile-skills remove`, and `profile-skills set` update profile skills and require explicit user intent plus user OAuth

@@ -1,6 +1,7 @@
 # Gmail CLI
 
-Personal CLI for Gmail OAuth, message search, message reads, and simple sends.
+Personal CLI for Gmail OAuth, labels, message search and reads, attachment
+inspection/downloads, message moves, and sends.
 
 ## Setup
 
