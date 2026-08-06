@@ -557,6 +557,39 @@ node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 
 `messages` lists message threads. Without `--project`, it lists all available threads, including support or private chat threads returned by Freelancer's API.
 
+## LinguaSlice
+
+Implementation:
+
+```text
+tools/linguaslice/cli.js
+```
+
+Tool notes:
+
+- Turns long spoken MP3 recordings into sentence-by-sentence listening exercises.
+- Uses OpenAI transcription punctuation and word timestamps to find sentence boundaries.
+- Uses FFmpeg and FFprobe to cut sentence clips from the original recording.
+- Reads `OPENAI_API_KEY` from the root `.env` unless `--transcript-json` is supplied.
+
+Create a sentence player:
+
+```bash
+node tools/linguaslice/cli.js create lesson.mp3
+```
+
+Choose the output folder and sentence padding:
+
+```bash
+node tools/linguaslice/cli.js create lesson.mp3 --output downloads/lesson-player --padding 0.25
+```
+
+Reuse a previous transcription without another API request:
+
+```bash
+node tools/linguaslice/cli.js create lesson.mp3 --transcript-json downloads/lesson-player/transcription.json
+```
+
 ## LinkedIn
 
 Implementation:

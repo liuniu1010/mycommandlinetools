@@ -12,6 +12,7 @@ This repository is a personal Node.js command-line toolset. Source code lives in
 - `tools/onedrive/` for OneDrive OAuth through Microsoft Graph, account reads, file search, metadata reads, downloads, uploads, file management, and browser open commands.
 - `tools/notion/` for Notion OAuth, page/database/block/comment/user reads, writes, resolution, and database summaries.
 - `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, user/profile/review reads, bid and milestone reads, bid submission/retraction, contests, messages, notifications, and browser open commands.
+- `tools/linguaslice/` for turning spoken MP3 recordings into sentence clips and a local interactive listening player.
 - `tools/linkedin/` for LinkedIn Jobs search URL generation and browser open commands. It must not scrape LinkedIn or automate a logged-in account.
 - `tools/playwright/` for Playwright-backed browser automation, including persistent Chromium/system-Chrome sessions, one-shot page reads, screenshots, tab switching, iframe targeting, page/form inspection, custom control handling, form filling, submit-result checks, and JSON flow execution.
 
@@ -30,7 +31,7 @@ Run commands from the repository root.
 - `npm run lint` enforces local style rules.
 - `npm run build` copies `tools/` into `dist/` and creates `dist/package.json`.
 
-Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search "node.js" --limit 20`, `node tools/freelancer/cli.js search "java spring boot" --limit 20`, `node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"`, `node tools/gcalendar/cli.js events --calendar primary`, `node tools/gdrive/cli.js files --query "proposal" --limit 20`, and `node tools/onedrive/cli.js files --query "proposal" --limit 20`.
+Tool examples: `node tools/gmail/cli.js help`, `node tools/upwork/cli.js search "node.js" --limit 20`, `node tools/freelancer/cli.js search "java spring boot" --limit 20`, `node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"`, `node tools/linguaslice/cli.js create lesson.mp3`, `node tools/gcalendar/cli.js events --calendar primary`, `node tools/gdrive/cli.js files --query "proposal" --limit 20`, and `node tools/onedrive/cli.js files --query "proposal" --limit 20`.
 
 ## Coding Style & Naming Conventions
 

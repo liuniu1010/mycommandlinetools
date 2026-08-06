@@ -19,6 +19,10 @@ const tools = {
     command: "gmail-cli",
     path: path.join(__dirname, "tools", "gmail", "cli.js"),
   },
+  linguaslice: {
+    command: "linguaslice-cli",
+    path: path.join(__dirname, "tools", "linguaslice", "cli.js"),
+  },
   linkedin: {
     command: "linkedin-cli",
     path: path.join(__dirname, "tools", "linkedin", "cli.js"),

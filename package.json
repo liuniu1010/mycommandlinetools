@@ -6,6 +6,7 @@
     "freelancer-cli": "./tools/freelancer/cli.js",
     "gcalendar-cli": "./tools/gcalendar/cli.js",
     "gdrive-cli": "./tools/gdrive/cli.js",
+    "linguaslice-cli": "./tools/linguaslice/cli.js",
     "linkedin-cli": "./tools/linkedin/cli.js",
     "notion-cli": "./tools/notion/cli.js",
     "onedrive-cli": "./tools/onedrive/cli.js",
