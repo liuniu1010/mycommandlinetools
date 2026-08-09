@@ -132,10 +132,16 @@ node tools/freelancer/cli.js milestones <projectId>
 node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10]
 node tools/freelancer/cli.js contests "logo design" --limit 10
 node tools/freelancer/cli.js services [--limit 10]
+node tools/linkedin/cli.js auth
+node tools/linkedin/cli.js auth-status
+node tools/linkedin/cli.js profile
+node tools/linkedin/cli.js post-text --text "Sharing a project update"
+node tools/linkedin/cli.js post-link --text "Worth reading" --url "https://example.com"
+node tools/linkedin/cli.js post-image --text "Project screenshot" --file screenshot.png
 node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"
 ```
 
-LinkedIn must only generate or open LinkedIn Jobs URLs. Do not scrape LinkedIn, automate a logged-in account, or claim job results from LinkedIn unless the user provides them.
+LinkedIn OAuth is limited to scopes approved for the developer application. Member publishing uses the self-service `w_member_social` scope, and every publishing command must preview the target account and content and receive typed confirmation. LinkedIn Jobs support must only generate or open LinkedIn Jobs URLs. Do not scrape LinkedIn, automate a logged-in account, call restricted Talent APIs, submit applications, or claim job results from LinkedIn unless the user provides them.
 
 Playwright browser automation:
 
@@ -210,6 +216,9 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/notion/cli.js update-block ...`
 - `node tools/notion/cli.js archive-block ...`
 - `node tools/notion/cli.js create-comment ...`
+- `node tools/linkedin/cli.js post-text ...`
+- `node tools/linkedin/cli.js post-link ...`
+- `node tools/linkedin/cli.js post-image ...`
 - `node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"`
 - `node tools/freelancer/cli.js retract-bid <bidId>` (alias: `withdraw-bid`)
 - `node tools/freelancer/cli.js profile-skills add <jobId> [jobId ...]`
@@ -253,6 +262,7 @@ node tools/onedrive/cli.js auth
 node tools/notion/cli.js auth
 node tools/upwork/cli.js auth
 node tools/freelancer/cli.js auth
+node tools/linkedin/cli.js auth
 ```
 
 OAuth tokens are stored under `tools/<tool>/.token.json`. Never reveal token contents.

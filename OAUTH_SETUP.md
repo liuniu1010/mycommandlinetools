@@ -342,9 +342,77 @@ node tools/notion/cli.js auth
 
 ## LinkedIn
 
-The LinkedIn tool does not use OAuth credentials.
+LinkedIn uses OAuth 2.0, but the scopes available to an application depend on
+the products and partner programs approved in the LinkedIn Developer Portal.
+The self-service **Sign in with LinkedIn using OpenID Connect** product grants
+the `openid`, `profile`, and `email` scopes used by this CLI's read-only
+`profile` command. The self-service **Share on LinkedIn** product grants
+`w_member_social`, which the CLI uses to publish member posts. These scopes do
+not provide job search, application submission, or messaging APIs.
+
+Steps:
+
+1. Open https://www.linkedin.com/developers/apps and create an application.
+2. Under **Products**, request **Sign in with LinkedIn using OpenID Connect**.
+3. Under **Products**, request **Share on LinkedIn** for publishing support.
+4. Under **Auth**, copy the Client ID and Client Secret.
+5. Add an exact HTTPS redirect URL under the application's OAuth 2.0 settings.
+6. Add the credentials and the same redirect URL to `.env`:
+
+```bash
+LINKEDIN_CLIENT_ID=your_linkedin_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
+LINKEDIN_CALLBACK_URL=https://your-domain.example/linkedin/callback
+LINKEDIN_SCOPES=openid profile email w_member_social
+LINKEDIN_API_VERSION=202607
+```
+
+Authenticate:
+
+```bash
+node tools/linkedin/cli.js auth
+```
+
+LinkedIn redirects the browser to the configured callback URL. Copy the complete
+redirected URL from the address bar and paste it into the CLI. The CLI verifies
+the URL and OAuth `state`, exchanges the authorization code, and saves the token
+to `tools/linkedin/.token.json` with mode `0600`.
+
+Verify the authenticated profile:
+
+```bash
+node tools/linkedin/cli.js profile
+```
+
+Check the account, granted scopes, and token expiry without exposing tokens:
+
+```bash
+node tools/linkedin/cli.js auth-status
+```
+
+Publish member posts:
+
+```bash
+node tools/linkedin/cli.js post-text --text "Sharing a project update"
+node tools/linkedin/cli.js post-link --text "Worth reading" --url "https://example.com" --title "Example article"
+node tools/linkedin/cli.js post-image --text "Project screenshot" --file screenshot.png --alt "Project dashboard"
+```
+
+Each publishing command requires typed confirmation before the remote write.
+The API version is configurable because LinkedIn sunsets versioned Marketing
+APIs; update `LINKEDIN_API_VERSION` to a currently supported `YYYYMM` release.
+
+LinkedIn does not issue programmatic refresh tokens to ordinary applications.
+If a token expires and no refresh token was granted, run `auth` again.
 
 LinkedIn job-search APIs are not generally available for personal automation.
-This repository's LinkedIn CLI only builds LinkedIn Jobs search URLs and can open
-those URLs in a browser. It must not scrape LinkedIn or automate a logged-in
-account.
+The CLI continues to build LinkedIn Jobs search URLs and can open those URLs in
+a browser, but it must not scrape LinkedIn, automate a logged-in account, submit
+applications, or call restricted Talent APIs.
+
+Official references:
+
+- https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow
+- https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access
+- https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api
+- https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/images-api

@@ -13,7 +13,7 @@ This repository is a personal Node.js command-line toolset. Source code lives in
 - `tools/notion/` for Notion OAuth, page/database/block/comment/user reads, writes, resolution, and database summaries.
 - `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, user/profile/review reads, bid and milestone reads, bid submission/retraction, contests, messages, notifications, and browser open commands.
 - `tools/linguaslice/` for turning spoken MP3 recordings into sentence clips and a local interactive listening player.
-- `tools/linkedin/` for LinkedIn Jobs search URL generation and browser open commands. It must not scrape LinkedIn or automate a logged-in account.
+- `tools/linkedin/` for LinkedIn OAuth profile reads, confirmed member post publishing, LinkedIn Jobs search URL generation, and browser open commands. It must not scrape LinkedIn, automate a logged-in account, or call restricted Talent APIs.
 - `tools/playwright/` for Playwright-backed browser automation, including persistent Chromium/system-Chrome sessions, one-shot page reads, screenshots, tab switching, iframe targeting, page/form inspection, custom control handling, form filling, submit-result checks, and JSON flow execution.
 
 Each tool has a local `README.md`. Root-level command examples are documented in `COMMANDS.md`. Build and verification helpers live in `scripts/`. Generated output goes to `dist/`; downloaded files and browser artifacts commonly go to `downloads/`. Do not edit generated or downloaded output by hand.

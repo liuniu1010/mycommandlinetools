@@ -600,9 +600,41 @@ tools/linkedin/cli.js
 
 Tool notes:
 
+- Uses LinkedIn OAuth 2.0 for approved member scopes, read-only OpenID profile access, and confirmed member post publishing.
+- Saves OAuth tokens locally to `tools/linkedin/.token.json`, including account metadata when available.
 - Builds LinkedIn Jobs search URLs and can open them in your browser.
 - Does not scrape LinkedIn, automate your account, or call restricted Talent APIs.
 - Useful while keeping search/review actions manual inside LinkedIn.
+
+Configure OAuth credentials:
+
+```bash
+LINKEDIN_CLIENT_ID=your_linkedin_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
+LINKEDIN_CALLBACK_URL=https://your-domain.example/linkedin/callback
+LINKEDIN_SCOPES=openid profile email w_member_social
+LINKEDIN_API_VERSION=202607
+```
+
+Authenticate and read the approved OpenID profile:
+
+```bash
+node tools/linkedin/cli.js auth
+node tools/linkedin/cli.js auth-status
+node tools/linkedin/cli.js profile
+```
+
+The OAuth callback URL must exactly match the URL registered in the LinkedIn developer application. The `auth` command asks you to paste the complete redirected URL so it can validate the callback and OAuth state before exchanging the authorization code. Standard LinkedIn applications may require reauthorization after token expiry because programmatic refresh tokens are limited to selected partners.
+
+Publish as the authenticated member after enabling **Share on LinkedIn**:
+
+```bash
+node tools/linkedin/cli.js post-text --text "Sharing a project update"
+node tools/linkedin/cli.js post-link --text "Worth reading" --url "https://example.com" --title "Example article"
+node tools/linkedin/cli.js post-image --text "Project screenshot" --file screenshot.png --alt "Project dashboard"
+```
+
+Every publishing command prints the target account and complete content, then requires `publish` confirmation before making a remote write.
 
 Print a job search URL:
 
