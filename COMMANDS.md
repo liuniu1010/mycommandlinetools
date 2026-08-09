@@ -611,7 +611,7 @@ Configure OAuth credentials:
 ```bash
 LINKEDIN_CLIENT_ID=your_linkedin_client_id
 LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
-LINKEDIN_CALLBACK_URL=https://your-domain.example/linkedin/callback
+LINKEDIN_CALLBACK_URL=http://localhost:3000/callback
 LINKEDIN_SCOPES=openid profile email w_member_social
 LINKEDIN_API_VERSION=202607
 ```
@@ -624,7 +624,7 @@ node tools/linkedin/cli.js auth-status
 node tools/linkedin/cli.js profile
 ```
 
-The OAuth callback URL must exactly match the URL registered in the LinkedIn developer application. The `auth` command asks you to paste the complete redirected URL so it can validate the callback and OAuth state before exchanging the authorization code. Standard LinkedIn applications may require reauthorization after token expiry because programmatic refresh tokens are limited to selected partners.
+The OAuth callback URL must exactly match the URL registered in the LinkedIn developer application. The `auth` command starts a local callback server, validates the OAuth state, exchanges the authorization code, and closes the server after saving the token. Standard LinkedIn applications may require reauthorization after token expiry because programmatic refresh tokens are limited to selected partners.
 
 Publish as the authenticated member after enabling **Share on LinkedIn**:
 

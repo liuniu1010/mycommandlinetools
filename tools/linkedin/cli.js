@@ -3,8 +3,8 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
-const readline = require("readline");
 const { spawn } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "../..");
@@ -18,6 +18,7 @@ const TOKEN_ENDPOINT = "https://www.linkedin.com/oauth/v2/accessToken";
 const USERINFO_ENDPOINT = "https://api.linkedin.com/v2/userinfo";
 const POSTS_ENDPOINT = "https://api.linkedin.com/rest/posts";
 const IMAGES_ENDPOINT = "https://api.linkedin.com/rest/images?action=initializeUpload";
+const DEFAULT_CALLBACK_URL = "http://localhost:3000/callback";
 const DEFAULT_SCOPES = "openid profile email w_member_social";
 const DEFAULT_API_VERSION = "202607";
 const MEMBER_POST_SCOPE = "w_member_social";
@@ -89,14 +90,13 @@ function requireConfig() {
   const config = {
     clientId: process.env.LINKEDIN_CLIENT_ID,
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-    callbackUrl: process.env.LINKEDIN_CALLBACK_URL,
+    callbackUrl: process.env.LINKEDIN_CALLBACK_URL || DEFAULT_CALLBACK_URL,
     scopes: process.env.LINKEDIN_SCOPES || DEFAULT_SCOPES,
     apiVersion: process.env.LINKEDIN_API_VERSION || DEFAULT_API_VERSION,
   };
   const missing = [];
   if (!config.clientId) missing.push("LINKEDIN_CLIENT_ID");
   if (!config.clientSecret) missing.push("LINKEDIN_CLIENT_SECRET");
-  if (!config.callbackUrl) missing.push("LINKEDIN_CALLBACK_URL");
   if (missing.length) {
     throw new Error(`Missing ${missing.join(", ")} in ${ENV_FILE}`);
   }
@@ -243,49 +243,9 @@ function openBrowser(url) {
   child.unref();
 }
 
-function prompt(question) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
-
-function parseCallbackResponse(value, config, state) {
-  if (!value) throw new Error("No callback URL was provided");
-  let callbackResponse;
-  try {
-    callbackResponse = new URL(value);
-  } catch {
-    throw new Error("Paste the complete callback URL, including the code and state parameters");
-  }
-  const configuredCallback = new URL(config.callbackUrl);
-  if (
-    callbackResponse.origin !== configuredCallback.origin ||
-    callbackResponse.pathname !== configuredCallback.pathname
-  ) {
-    throw new Error("Callback URL does not match LINKEDIN_CALLBACK_URL");
-  }
-  if (callbackResponse.searchParams.get("state") !== state) {
-    throw new Error("OAuth state mismatch");
-  }
-  const error = callbackResponse.searchParams.get("error");
-  if (error) {
-    const description = callbackResponse.searchParams.get("error_description");
-    throw new Error(`LinkedIn authorization failed: ${description || error}`);
-  }
-  const code = callbackResponse.searchParams.get("code");
-  if (!code) throw new Error("Missing authorization code in callback URL");
-  return code;
-}
-
 async function auth() {
   const config = requireConfig();
+  const callback = new URL(config.callbackUrl);
   const state = crypto.randomBytes(32).toString("hex");
   const authorizeUrl = new URL(AUTH_ENDPOINT);
   authorizeUrl.searchParams.set("response_type", "code");
@@ -294,25 +254,64 @@ async function auth() {
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("scope", config.scopes.trim().split(/\s+/).join(" "));
 
+  const server = http.createServer(async (req, res) => {
+    try {
+      const requestUrl = new URL(req.url, config.callbackUrl);
+      if (requestUrl.pathname !== callback.pathname) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+      if (requestUrl.searchParams.get("state") !== state) {
+        res.writeHead(400);
+        res.end("OAuth state mismatch.");
+        return;
+      }
+      const error = requestUrl.searchParams.get("error");
+      if (error) {
+        const description = requestUrl.searchParams.get("error_description");
+        res.writeHead(400, { "Content-Type": "text/plain" });
+        res.end(`LinkedIn authorization failed: ${description || error}`);
+        server.close();
+        return;
+      }
+      const code = requestUrl.searchParams.get("code");
+      if (!code) {
+        res.writeHead(400);
+        res.end("Missing authorization code.");
+        return;
+      }
+
+      const token = await requestToken({
+        grant_type: "authorization_code",
+        code,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        redirect_uri: config.callbackUrl,
+      });
+      if (!token.scope) token.scope = config.scopes;
+      const metadata = await tryGetLinkedInProfile(token.access_token);
+      writeToken(token, {}, metadata);
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end("LinkedIn CLI authorization complete. You can close this tab.");
+      console.log(`Saved OAuth token to ${TOKEN_FILE}`);
+      server.close();
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "text/plain" });
+      res.end(err.message);
+      console.error(err.message);
+      server.close();
+    }
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(Number(callback.port || 80), callback.hostname, resolve);
+  });
+
   console.log("Open this URL in your browser and approve access:");
   console.log(authorizeUrl.toString());
-  console.log("");
-  console.log("After LinkedIn redirects, copy the complete URL from the browser address bar.");
   openBrowser(authorizeUrl.toString());
-
-  const callbackResponse = await prompt("Callback URL: ");
-  const code = parseCallbackResponse(callbackResponse, config, state);
-  const token = await requestToken({
-    grant_type: "authorization_code",
-    code,
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    redirect_uri: config.callbackUrl,
-  });
-  if (!token.scope) token.scope = config.scopes;
-  const metadata = await tryGetLinkedInProfile(token.access_token);
-  writeToken(token, {}, metadata);
-  console.log(`Saved OAuth token to ${TOKEN_FILE}`);
 }
 
 async function profile() {

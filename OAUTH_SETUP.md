@@ -356,13 +356,18 @@ Steps:
 2. Under **Products**, request **Sign in with LinkedIn using OpenID Connect**.
 3. Under **Products**, request **Share on LinkedIn** for publishing support.
 4. Under **Auth**, copy the Client ID and Client Secret.
-5. Add an exact HTTPS redirect URL under the application's OAuth 2.0 settings.
+5. Add this exact redirect URL under the application's OAuth 2.0 settings:
+
+```text
+http://localhost:3000/callback
+```
+
 6. Add the credentials and the same redirect URL to `.env`:
 
 ```bash
 LINKEDIN_CLIENT_ID=your_linkedin_client_id
 LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
-LINKEDIN_CALLBACK_URL=https://your-domain.example/linkedin/callback
+LINKEDIN_CALLBACK_URL=http://localhost:3000/callback
 LINKEDIN_SCOPES=openid profile email w_member_social
 LINKEDIN_API_VERSION=202607
 ```
@@ -373,10 +378,9 @@ Authenticate:
 node tools/linkedin/cli.js auth
 ```
 
-LinkedIn redirects the browser to the configured callback URL. Copy the complete
-redirected URL from the address bar and paste it into the CLI. The CLI verifies
-the URL and OAuth `state`, exchanges the authorization code, and saves the token
-to `tools/linkedin/.token.json` with mode `0600`.
+The CLI starts a local callback server, opens LinkedIn in the browser, verifies
+the OAuth `state`, exchanges the authorization code, and saves the token to
+`tools/linkedin/.token.json` with mode `0600`.
 
 Verify the authenticated profile:
 

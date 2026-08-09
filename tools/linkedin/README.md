@@ -15,12 +15,12 @@ Create a LinkedIn developer application, enable **Sign in with LinkedIn using Op
 ```bash
 LINKEDIN_CLIENT_ID=your_linkedin_client_id
 LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
-LINKEDIN_CALLBACK_URL=https://your-domain.example/linkedin/callback
+LINKEDIN_CALLBACK_URL=http://localhost:3000/callback
 LINKEDIN_SCOPES=openid profile email w_member_social
 LINKEDIN_API_VERSION=202607
 ```
 
-LinkedIn's standard authorization-code documentation requires a registered HTTPS redirect URL. The CLI prints and opens the authorization URL, then asks you to paste the complete redirected URL from the browser address bar. It validates the callback URL and OAuth `state` before exchanging the code.
+Register the exact callback URL in the LinkedIn Developer Portal. The CLI starts a local callback server, opens the authorization URL, validates OAuth `state`, exchanges the authorization code, and closes the server after saving the token.
 
 Authorize and read the authenticated profile:
 
