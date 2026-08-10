@@ -20,6 +20,12 @@ Each tool has a local `README.md`. Root-level command examples are documented in
 
 Assistant-specific files are owned by their matching CLI. Claude Code should update only Claude-related files such as `CLAUDE.md` and `.claude/`. Codex CLI should update only Codex-related files such as `AGENTS.md`, `.agents/`, and `.codex/`. Do not update another assistant CLI's files unless the user explicitly asks for that specific file.
 
+## Unix Design Principles
+
+Before architecture, implementation, testing, or code-review work, read `docs/references/unix-programming-principles.md`. Apply its core rules and the checklist for your assigned role.
+
+Treat these principles as engineering heuristics rather than mechanical requirements. Repository security rules, explicit task requirements, and approved architecture designs take precedence. When two principles pull in different directions, make the tradeoff explicit and choose based on evidence, simplicity, safety, and the needs of this repository.
+
 ## Build, Test, and Development Commands
 
 Run commands from the repository root.
