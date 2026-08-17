@@ -701,18 +701,36 @@ async function bid(args) {
       "Usage: node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description \"text\" [--milestone-percentage <n>]"
     );
   }
+  const amount = Number(options.amount);
+  const period = Number(options.period);
+  const numericProjectId = Number(projectId);
+  const description = typeof options.description === "string" ? options.description.trim() : "";
+  const milestonePercentage = options["milestone-percentage"] == null
+    ? undefined
+    : Number(options["milestone-percentage"]);
+  if (!Number.isSafeInteger(numericProjectId) || numericProjectId <= 0) {
+    throw new Error("Project ID must be a positive integer.");
+  }
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Bid amount must be a positive number.");
+  if (!Number.isInteger(period) || period <= 0) throw new Error("Bid period must be a positive number of days.");
+  if (!description) throw new Error("Bid description must not be empty.");
+  if (milestonePercentage != null && (
+    !Number.isFinite(milestonePercentage) || milestonePercentage < 0 || milestonePercentage > 100
+  )) {
+    throw new Error("Milestone percentage must be between 0 and 100.");
+  }
   const savedToken = readToken();
   const bidderId = Number(options["bidder-id"] || savedToken.account_id);
   if (!bidderId) {
     throw new Error("Could not determine bidder_id. Run `node tools/freelancer/cli.js profile` or pass --bidder-id <userId>.");
   }
   const payload = {
-    project_id: Number(projectId),
+    project_id: numericProjectId,
     bidder_id: bidderId,
-    amount: Number(options.amount),
-    period: Number(options.period),
-    description: options.description,
-    milestone_percentage: options["milestone-percentage"] ? Number(options["milestone-percentage"]) : undefined,
+    amount,
+    period,
+    description,
+    milestone_percentage: milestonePercentage,
   };
   const body = await apiPost("/api/projects/0.1/bids/", payload);
   const result = body.result || body;
@@ -922,6 +940,28 @@ async function milestones(args) {
   });
 }
 
+async function createMilestoneRequest(projectId, bidId, amount, description) {
+  if (!Number.isSafeInteger(projectId) || projectId <= 0) {
+    throw new Error("Milestone project ID must be a positive integer.");
+  }
+  if (!Number.isSafeInteger(bidId) || bidId <= 0) {
+    throw new Error("Milestone bid ID must be a positive integer.");
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Milestone amount must be a positive number.");
+  }
+  const normalizedDescription = typeof description === "string" ? description.trim() : "";
+  if (!normalizedDescription) throw new Error("Milestone description must not be empty.");
+  const payload = {
+    project_id: projectId,
+    bid_id: bidId,
+    amount,
+    description: normalizedDescription,
+  };
+  const body = await apiPost("/api/projects/0.1/milestone_requests/", payload);
+  return body.result || body;
+}
+
 async function requestMilestone(args) {
   const options = parseOptions(args);
   const projectId = options._[0];
@@ -930,14 +970,12 @@ async function requestMilestone(args) {
       "Usage: node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amount <n> --description \"text\""
     );
   }
-  const payload = {
-    project_id: Number(projectId),
-    bid_id: Number(options.bid),
-    amount: Number(options.amount),
-    description: options.description,
-  };
-  const body = await apiPost("/api/projects/0.1/milestone_requests/", payload);
-  const result = body.result || body;
+  const result = await createMilestoneRequest(
+    Number(projectId),
+    Number(options.bid),
+    Number(options.amount),
+    options.description
+  );
   console.log(`Milestone request submitted successfully. Request ID: ${result.id || "n/a"}`);
   console.log(JSON.stringify(result, null, 2));
 }

@@ -219,7 +219,7 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/linkedin/cli.js post-text ...`
 - `node tools/linkedin/cli.js post-link ...`
 - `node tools/linkedin/cli.js post-image ...`
-- `node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text"`
+- `node tools/freelancer/cli.js bid <projectId> --amount <n> --period <days> --description "text" [--milestone-percentage <n>]`
 - `node tools/freelancer/cli.js retract-bid <bidId>` (alias: `withdraw-bid`)
 - `node tools/freelancer/cli.js profile-skills add <jobId> [jobId ...]`
 - `node tools/freelancer/cli.js profile-skills remove <jobId> [jobId ...]`
@@ -249,7 +249,7 @@ For every Google Drive write command, ask for user permission first even when th
 For every OneDrive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Delete must be explicitly confirmed.
 For every Freelancer profile skill update, ask for user permission first. Permission must name whether skills will be added, removed, or replaced, and list the skill names or Freelancer job/skill IDs.
 For every Freelancer bid retraction, confirm the exact bid ID and verify that the project is still open for bidding. Freelancer does not restore the consumed bid allowance or refund paid bid upgrades after retraction.
-After submitting a fixed-price Freelancer bid through the CLI, tell the user that `--milestone-percentage` only sets the bid percentage field and may not create the website-style milestone payment row. Run `node tools/freelancer/cli.js milestone-requests --bid <bidId>` when a bid ID is available, and notify the user to edit the bid on Freelancer.com manually if no milestone request/payment row is returned.
+For a fixed-price Freelancer bid, `--milestone-percentage` only sets the bid percentage field. Freelancer's documented public bid API does not expose the website proposal form's milestone description-and-amount rows. The separate `request-milestone` command creates a pending payment request and must not be used as a substitute for the proposal schedule. If proposal-form milestone rows are required, tell the user that the website must be used and obtain confirmation before any browser action.
 
 Authentication commands are expected to start a localhost OAuth callback server and may need browser interaction:
 

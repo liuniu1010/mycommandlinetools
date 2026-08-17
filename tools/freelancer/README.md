@@ -109,20 +109,15 @@ node tools/freelancer/cli.js bids <projectId>
 node tools/freelancer/cli.js bid <projectId> --amount 150 --period 7 --description "I can build this for you"
 ```
 
-Options: `--amount N`, `--period <days>`, `--description "text"`, `--milestone-percentage N`
+Options: `--amount N`, `--period <days>`, `--description "text"`, and
+`--milestone-percentage N`.
 
-`--milestone-percentage` sets the bid's milestone percentage field, but the
-public API does not expose the same bid-time milestone payment schedule rows
-shown on Freelancer's website. After submitting a fixed-price bid through the
-CLI, check whether a milestone request/payment row exists:
-
-```bash
-node tools/freelancer/cli.js milestone-requests --bid <bidId>
-```
-
-If no milestone request is returned and the website requires a milestone payment
-row, edit the bid on Freelancer.com and set the milestone description and amount
-manually.
+`--milestone-percentage` sets only the bid's percentage field. Freelancer's
+documented public bid API does not expose the description-and-amount rows from
+the website's "Request milestone payments" proposal form. The separate
+`request-milestone` command creates a pending payment request; it does not fill
+or edit those proposal-form rows. Set proposal-form milestone rows on the
+Freelancer website when they are required.
 
 ### Retract a bid
 
@@ -208,7 +203,8 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - Freelancer uses `Freelancer-OAuth-V1` header instead of `Bearer` — handled automatically
 - `bid` submits a proposal and requires explicit user intent plus user OAuth, not client credentials
 - `retract-bid` and `withdraw-bid` retract a proposal and require explicit user intent plus user OAuth
-- `bid --milestone-percentage` does not guarantee a website-style milestone payment row exists; verify with `milestone-requests --bid <bidId>` and use the website when needed
+- `bid --milestone-percentage` sets only the bid percentage field and does not fill the website's proposal milestone schedule
+- `request-milestone` creates a separate pending payment request; do not use it as a substitute for the website's proposal milestone schedule
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
 - `profile-skills add`, `profile-skills remove`, and `profile-skills set` update profile skills and require explicit user intent plus user OAuth
 - `services`, `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
