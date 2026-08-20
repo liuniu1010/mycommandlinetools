@@ -543,7 +543,13 @@ node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset
 node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 ```
 
-`services` lists your own Freelancer Services by default, lists another user's services with `--owner`, or fetches specific service IDs. Service creation is not implemented because the checked official SDK/docs do not expose a safe creation payload.
+`services` lists current Freelancer Service Offerings for your account by default,
+lists another user's offerings with `--owner`, or fetches specific offering IDs.
+It uses the public `/api/service_offerings/0.1/service_offerings` endpoint
+without an OAuth header; Freelancer's older
+`/api/projects/0.1/services/` endpoint does not return current website listings.
+Service creation is not implemented because the checked official SDK/docs do not
+expose a safe creation payload.
 
 `portfolios` lists portfolio items for your account by default or for another user ID. Portfolio creation/edit/delete is not implemented because the official SDK exposes retrieval only, and write probes returned `405` or `404`; use the Freelancer website for portfolio writes.
 

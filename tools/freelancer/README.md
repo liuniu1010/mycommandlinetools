@@ -151,7 +151,12 @@ node tools/freelancer/cli.js services --owner <userId> [--limit 10]
 node tools/freelancer/cli.js services <serviceId> [serviceId ...] [--json]
 ```
 
-Services are read-only in this CLI. Freelancer exposes a confirmed service read endpoint under `/api/projects/0.1/services/`, but the public SDK/docs checked here do not expose a safe creation payload for publishing Services.
+Services are read-only in this CLI. Current Freelancer Services use the public
+Service Offerings endpoint at `/api/service_offerings/0.1/service_offerings`
+without an OAuth header; the older `/api/projects/0.1/services/` endpoint does
+not return current website listings.
+The public SDK/docs checked here do not expose a safe creation payload for
+publishing Service Offerings.
 
 ### Portfolios
 
@@ -207,5 +212,6 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - `request-milestone` creates a separate pending payment request; do not use it as a substitute for the website's proposal milestone schedule
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
 - `profile-skills add`, `profile-skills remove`, and `profile-skills set` update profile skills and require explicit user intent plus user OAuth
-- `services`, `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
+- `services` uses Freelancer's public Service Offerings endpoint without an OAuth header; its default owner lookup uses the saved token's account ID
+- `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
 - `notifications` is implemented, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable

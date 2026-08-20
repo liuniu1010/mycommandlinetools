@@ -354,6 +354,37 @@ async function apiGet(pathname, params = {}) {
   return body;
 }
 
+async function apiPublicGet(pathname, params = {}) {
+  loadEnv();
+  const baseUrl = process.env.FREELANCER_BASE_URL || DEFAULT_BASE_URL;
+  const url = new URL(pathname, baseUrl);
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null || value === false || value === "") continue;
+    if (Array.isArray(value)) {
+      value.forEach((item) => url.searchParams.append(`${key}[]`, item));
+    } else {
+      url.searchParams.set(key, String(value));
+    }
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "personal-toolset freelancer-cli",
+    },
+  });
+  const text = await res.text();
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    body = { raw: text };
+  }
+  if (!res.ok || body.status === "error") {
+    throw new Error(`Public API request failed (${res.status}): ${JSON.stringify(body, null, 2)}`);
+  }
+  return body;
+}
+
 function projectUrl(project) {
   const seo = project.seo_url || project.url;
   if (seo && /^https?:\/\//.test(seo)) return seo;
@@ -405,17 +436,30 @@ function printServices(services) {
     if (service.status || service.sub_status) {
       console.log(`   status: ${[service.status, service.sub_status].filter(Boolean).join(" | ")}`);
     }
-    if (service.base_cost != null || service.base_duration != null) {
-      const cost = service.base_cost == null ? "" : `${service.base_cost} ${currency}`.trim();
-      const duration = service.base_duration == null ? "" : `${service.base_duration} day(s)`;
-      console.log(`   base: ${[cost, duration].filter(Boolean).join(" over ")}`);
+    if (service.create_date) {
+      console.log(`   created: ${new Date(Number(service.create_date) * 1000).toISOString()}`);
     }
+    const price = service.price ?? service.base_cost;
+    const durationSeconds = service.duration == null ? null : Number(service.duration);
+    const duration = durationSeconds == null
+      ? service.base_duration == null ? "" : `${service.base_duration} day(s)`
+      : durationSeconds % 86400 === 0
+        ? `${durationSeconds / 86400} day(s)`
+        : `${durationSeconds} second(s)`;
+    if (price != null) {
+      console.log(`   price: ${`${price} ${currency}`.trim()}`);
+    }
+    if (duration) console.log(`   delivery: ${duration}`);
     const jobs = (service.jobs || []).map((job) => job.name).filter(Boolean).slice(0, 8).join(", ");
     if (jobs) console.log(`   skills: ${jobs}`);
     if (service.description) {
       console.log(`   preview: ${String(service.description).replace(/\s+/g, " ").trim().slice(0, 180)}`);
     }
-    console.log(`   url: ${DEFAULT_BASE_URL}/services/${service.id}`);
+    const seoUrl = String(service.seo_url || "").replace(/^\/+/, "");
+    const url = seoUrl
+      ? `${DEFAULT_BASE_URL}/service/${seoUrl}`
+      : `${DEFAULT_BASE_URL}/services/${service.id}`;
+    console.log(`   url: ${url}`);
     console.log("");
   });
 }
@@ -780,26 +824,36 @@ async function contests(args) {
 
 async function services(args) {
   const options = parseOptions(args);
+  const limit = Math.min(Math.max(Number(options.limit || 10), 1), 100);
+  const offset = Math.max(Number(options.offset || 0), 0);
   const params = {
-    limit: Math.min(Math.max(Number(options.limit || 10), 1), 100),
+    limit,
+    offset,
     job_details: true,
     review_details: options.reviews === true,
+    compact: true,
   };
-  if (options.offset) params.offset = Math.max(Number(options.offset), 0);
   if (options._.length) {
-    params.services = options._;
+    const serviceIds = options._.map((value) => Number(value));
+    const invalid = options._.filter(
+      (value, index) => !Number.isInteger(serviceIds[index]) || serviceIds[index] <= 0
+    );
+    if (invalid.length) {
+      throw new Error(`Service offering IDs must be positive integers. Invalid: ${invalid.join(", ")}`);
+    }
+    params.ids = serviceIds;
   } else if (options.owner) {
-    params.owners = [options.owner];
+    params.creator_ids = [options.owner];
   } else {
     const savedToken = readToken();
     if (!savedToken.account_id) {
       throw new Error("Could not determine owner ID. Pass service IDs or --owner <userId>.");
     }
-    params.owners = [savedToken.account_id];
+    params.creator_ids = [savedToken.account_id];
   }
-  const body = await apiGet("/api/projects/0.1/services/", params);
-  const list = body.result?.services || body.result || [];
-  if (!list || !list.length) {
+  const body = await apiPublicGet("/api/service_offerings/0.1/service_offerings", params);
+  const list = body.result?.service_offerings || [];
+  if (!list.length) {
     console.log("No services found.");
     return;
   }
