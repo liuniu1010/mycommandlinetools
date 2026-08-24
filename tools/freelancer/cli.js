@@ -464,6 +464,35 @@ function printServices(services) {
   });
 }
 
+function printServiceOrders(projects) {
+  console.log(`Showing ${projects.length} service order(s).\n`);
+  projects.forEach((project, index) => {
+    const customer = project.owner_info || {};
+    const customerName =
+      customer.display_name || customer.public_name || customer.username || project.owner_id;
+    const status = project.frontend_project_status || project.status || project.sub_status;
+    const submitted = project.submitdate || project.time_submitted;
+    const budget = formatBudget(project);
+
+    console.log(`${index + 1}. ${project.title || "(untitled service order)"}`);
+    console.log(`   project id: ${project.id}`);
+    console.log(`   service offering id: ${project.service_offering_id}`);
+    if (customerName) console.log(`   customer: ${customerName}`);
+    if (status) console.log(`   status: ${status}`);
+    if (submitted) {
+      console.log(`   purchased: ${new Date(Number(submitted) * 1000).toISOString()}`);
+    }
+    if (project.time_updated) {
+      console.log(`   updated: ${new Date(Number(project.time_updated) * 1000).toISOString()}`);
+    }
+    if (project.type || budget) {
+      console.log(`   terms: ${[project.type, budget].filter(Boolean).join(" | ")}`);
+    }
+    console.log(`   url: ${projectUrl(project)}`);
+    console.log("");
+  });
+}
+
 function printPortfolios(portfolios) {
   console.log(`Showing ${portfolios.length} portfolio item(s).\n`);
   portfolios.forEach((portfolio, index) => {
@@ -864,6 +893,42 @@ async function services(args) {
   printServices(list);
 }
 
+async function serviceOrders(args) {
+  const options = parseOptions(args);
+  const limit = Math.min(Math.max(Number(options.limit || 100), 1), 100);
+  const offset = Math.max(Number(options.offset || 0), 0);
+  const savedToken = readToken();
+  if (!savedToken.account_id) {
+    throw new Error("Could not determine your Freelancer user ID. Run `node tools/freelancer/cli.js auth` again.");
+  }
+
+  const body = await apiGet("/api/projects/0.1/projects/", {
+    bidders: [savedToken.account_id],
+    limit,
+    offset,
+    full_description: true,
+    user_details: true,
+  });
+  const projects = body.result?.projects || [];
+  const orders = projects.filter((project) => project.service_offering_id != null);
+
+  if (options.json) {
+    console.log(JSON.stringify(orders, null, 2));
+    return;
+  }
+  if (!orders.length) {
+    const total = body.result?.total_count;
+    const scanned = projects.length;
+    const available = total == null ? "" : ` of ${total}`;
+    console.log(`No service orders found in ${scanned}${available} account project(s) checked.`);
+    if (total != null && offset + scanned < Number(total)) {
+      console.log(`More projects are available; rerun with --offset ${offset + scanned}.`);
+    }
+    return;
+  }
+  printServiceOrders(orders);
+}
+
 async function portfolios(args) {
   const options = parseOptions(args);
   const userId = options.user || options._[0] || readToken().account_id;
@@ -1111,6 +1176,7 @@ Usage:
   node tools/freelancer/cli.js retract-bid <bidId>                    (alias: withdraw-bid)
   node tools/freelancer/cli.js contests ["keywords"] [--limit 10] [--offset 0] [--full-description]
   node tools/freelancer/cli.js services [serviceId ...] [--owner <userId>] [--limit 10] [--offset 0] [--reviews] [--json]
+  node tools/freelancer/cli.js service-orders [--limit 100] [--offset 0] [--json]  (alias: service-purchases)
   node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]
   node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
   node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
@@ -1134,6 +1200,7 @@ Examples:
   node tools/freelancer/cli.js contests "logo design" --limit 10
   node tools/freelancer/cli.js services
   node tools/freelancer/cli.js services 1 --json
+  node tools/freelancer/cli.js service-orders
   node tools/freelancer/cli.js portfolios
   node tools/freelancer/cli.js messages
   node tools/freelancer/cli.js project-messages 40458235
@@ -1163,6 +1230,7 @@ async function main() {
   if (command === "retract-bid" || command === "withdraw-bid") return retractBid(args);
   if (command === "contests") return contests(args);
   if (command === "services") return services(args);
+  if (command === "service-orders" || command === "service-purchases") return serviceOrders(args);
   if (command === "portfolios") return portfolios(args);
   if (command === "messages") return messages(args);
   if (command === "project-messages") return projectMessages(args);

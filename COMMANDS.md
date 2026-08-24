@@ -440,7 +440,7 @@ Tool notes:
 - Uses the official Freelancer.com API, not website scraping.
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
-- Supports read-only project search/detail, profile and user lookup, profile skill reads, portfolio reads, reviews, bid reads, contests, services, messages, project messages, milestone payment reads, and milestone request reads.
+- Supports read-only project search/detail, profile and user lookup, profile skill reads, portfolio reads, reviews, bid reads, contests, services, Service purchase checks, messages, project messages, milestone payment reads, and milestone request reads.
 - Implements notifications, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable.
 - Supports bid submission/retraction, profile skill updates, and milestone payment request submission as side-effecting commands; confirm the bid, profile skill, or milestone details before using them.
 - Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
@@ -538,6 +538,7 @@ Search contests and inspect account activity:
 ```bash
 node tools/freelancer/cli.js contests "logo design" --limit 10
 node tools/freelancer/cli.js services [serviceId ...] [--owner <userId>] [--limit 10] [--offset 0] [--reviews] [--json]
+node tools/freelancer/cli.js service-orders [--limit 100] [--offset 0] [--json]
 node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
 node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
 node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
@@ -550,6 +551,12 @@ without an OAuth header; Freelancer's older
 `/api/projects/0.1/services/` endpoint does not return current website listings.
 Service creation is not implemented because the checked official SDK/docs do not
 expose a safe creation payload.
+
+`service-orders` (alias `service-purchases`) manually checks authenticated
+projects associated with your Freelancer account and shows only projects with a
+`service_offering_id`. These are purchases of your published Services. The
+command checks up to 100 recent account projects per request; use `--offset` to
+inspect older pages. It uses the official API and does not scrape the website.
 
 `portfolios` lists portfolio items for your account by default or for another user ID. Portfolio creation/edit/delete is not implemented because the official SDK exposes retrieval only, and write probes returned `405` or `404`; use the Freelancer website for portfolio writes.
 

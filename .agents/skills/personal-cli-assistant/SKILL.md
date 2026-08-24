@@ -132,6 +132,7 @@ node tools/freelancer/cli.js milestones <projectId>
 node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10]
 node tools/freelancer/cli.js contests "logo design" --limit 10
 node tools/freelancer/cli.js services [serviceOfferingId ...] [--owner <userId>] [--limit 10] [--offset 0] [--reviews] [--json]
+node tools/freelancer/cli.js service-orders [--limit 100] [--offset 0] [--json]
 node tools/linkedin/cli.js auth
 node tools/linkedin/cli.js auth-status
 node tools/linkedin/cli.js profile
@@ -147,6 +148,8 @@ Freelancer Services use the public Service Offerings endpoint at
 read because Freelancer returns `403` when it is attached. Prefer the
 `services` CLI command over browser inspection; the default owner comes from
 saved token metadata, while explicit offering IDs or `--owner` are public reads.
+Use `service-orders` (alias `service-purchases`) for a read-only manual check of
+projects created by purchases of the user's Services.
 
 LinkedIn OAuth is limited to scopes approved for the developer application. Member publishing uses the self-service `w_member_social` scope, and every publishing command must preview the target account and content and receive typed confirmation. LinkedIn Jobs support must only generate or open LinkedIn Jobs URLs. Do not scrape LinkedIn, automate a logged-in account, call restricted Talent APIs, submit applications, or claim job results from LinkedIn unless the user provides them.
 

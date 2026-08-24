@@ -158,6 +158,18 @@ not return current website listings.
 The public SDK/docs checked here do not expose a safe creation payload for
 publishing Service Offerings.
 
+### Service purchases
+
+```bash
+node tools/freelancer/cli.js service-orders [--limit 100] [--offset 0] [--json]
+```
+
+`service-purchases` is an alias for `service-orders`. The command performs a
+read-only manual check of projects associated with your Freelancer account and
+returns only projects whose `service_offering_id` identifies them as Service
+purchases. `--limit` controls how many recent account projects are checked, up
+to 100 per request; use `--offset` to check older pages.
+
 ### Portfolios
 
 ```bash
@@ -213,5 +225,6 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - `request-milestone` submits a milestone payment request to the client and requires explicit user intent plus user OAuth
 - `profile-skills add`, `profile-skills remove`, and `profile-skills set` update profile skills and require explicit user intent plus user OAuth
 - `services` uses Freelancer's public Service Offerings endpoint without an OAuth header; its default owner lookup uses the saved token's account ID
+- `service-orders` uses authenticated project reads and requires user OAuth; it does not scrape the Freelancer website
 - `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
 - `notifications` is implemented, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable
