@@ -733,6 +733,16 @@ node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Atta
 node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/a.pdf --attach /tmp/b.docx
 ```
 
+Reply in an existing Gmail thread:
+
+```bash
+node tools/gmail/cli.js reply <messageId> --body "Thanks for the update."
+node tools/gmail/cli.js reply <messageId> --to other@example.com --body "Thanks for the update."
+```
+
+The reply recipient defaults to the source message's `Reply-To` header, then its
+`From` header. The command preserves the Gmail thread ID and standard reply headers.
+
 ## Outlook
 
 Implementation:

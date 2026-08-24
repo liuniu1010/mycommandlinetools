@@ -184,6 +184,7 @@ Playwright `snapshot` masks raw input values by design. `inspect-form` also avoi
 Treat these as side-effecting and require explicit user permission before execution. This list is illustrative, not exhaustive; if a command can change remote state, local files outside deliberate read-only inspection, account data, marketplace data, messages, calendar events, browser state, or submitted content, ask first.
 
 - `node tools/gmail/cli.js send ...`
+- `node tools/gmail/cli.js reply ...`
 - `node tools/outlook/cli.js send ...`
 - `node tools/gmail/cli.js move ...`
 - `node tools/outlook/cli.js move ...`

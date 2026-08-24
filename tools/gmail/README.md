@@ -30,6 +30,7 @@ node tools/gmail/cli.js attachments <messageId>
 node tools/gmail/cli.js download-attachments <messageId> --out downloads/gmail
 node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
 node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
+node tools/gmail/cli.js reply <messageId> --body "Thanks for the update."
 ```
 
 OAuth tokens are stored locally in `tools/gmail/.token.json`. The token file also includes `account_email` so you can see which Gmail account authorized the CLI.
@@ -37,3 +38,8 @@ OAuth tokens are stored locally in `tools/gmail/.token.json`. The token file als
 Message list and read output include both `date_utc` and `date_local`; local time uses the current system timezone.
 
 The `move` command uses Gmail labels: it adds the target label and removes the source label. Use `--create-label` to create a missing target label.
+
+The `reply` command sends to the source message's `Reply-To` address when present,
+otherwise its `From` address. It preserves Gmail threading with the source message's
+thread ID and reply headers. Use `--to` only when the reply recipient needs to be
+overridden.

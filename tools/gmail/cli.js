@@ -419,11 +419,16 @@ function encodeHeader(value) {
   return String(value || "").replace(/\r?\n/g, " ").trim();
 }
 
-function buildMessage({ to, subject, body, attachments: files }) {
+function buildMessage({ to, subject, body, attachments: files, headers = [] }) {
+  const messageHeaders = [
+    `To: ${encodeHeader(to)}`,
+    `Subject: ${encodeHeader(subject)}`,
+    ...headers.map(([name, value]) => `${name}: ${encodeHeader(value)}`),
+  ];
+
   if (files.length === 0) {
     return [
-      `To: ${encodeHeader(to)}`,
-      `Subject: ${encodeHeader(subject)}`,
+      ...messageHeaders,
       "Content-Type: text/plain; charset=utf-8",
       "Content-Transfer-Encoding: base64",
       "",
@@ -433,8 +438,7 @@ function buildMessage({ to, subject, body, attachments: files }) {
 
   const boundary = `gmail-cli-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const lines = [
-    `To: ${encodeHeader(to)}`,
-    `Subject: ${encodeHeader(subject)}`,
+    ...messageHeaders,
     "MIME-Version: 1.0",
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "",
@@ -529,12 +533,58 @@ async function send(args) {
     body: options.body,
     attachments: valuesForOption(options, "attach"),
   });
-  const encoded = Buffer.from(raw).toString("base64url");
-  const data = await gmail("/users/me/messages/send", {
-    method: "POST",
-    body: JSON.stringify({ raw: encoded }),
-  });
+  const data = await sendMessage(raw);
   console.log(`Sent message ${data.id}`);
+}
+
+async function sendMessage(raw, threadId) {
+  const request = {
+    raw: Buffer.from(raw).toString("base64url"),
+  };
+  if (threadId) request.threadId = threadId;
+  return gmail("/users/me/messages/send", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+async function reply(args) {
+  const messageId = args[0];
+  const options = parseOptions(args.slice(1));
+  if (!messageId || !options.body) {
+    throw new Error(
+      'Usage: node tools/gmail/cli.js reply <messageId> --body "Message" [--to address] [--attach file]'
+    );
+  }
+
+  const original = await gmail(
+    `/users/me/messages/${encodeURIComponent(messageId)}?format=metadata`
+  );
+  const headers = Object.fromEntries(
+    (original.payload?.headers || []).map((header) => [header.name.toLowerCase(), header.value])
+  );
+  const to = options.to || headers["reply-to"] || headers.from;
+  const originalMessageId = headers["message-id"];
+  if (!to || !headers.subject || !originalMessageId || !original.threadId) {
+    throw new Error(`Message ${messageId} is missing reply metadata`);
+  }
+
+  const subject = /^re:/i.test(headers.subject)
+    ? headers.subject
+    : `Re: ${headers.subject}`;
+  const references = [headers.references, originalMessageId].filter(Boolean).join(" ");
+  const raw = buildMessage({
+    to,
+    subject,
+    body: options.body,
+    attachments: valuesForOption(options, "attach"),
+    headers: [
+      ["In-Reply-To", originalMessageId],
+      ["References", references],
+    ],
+  });
+  const data = await sendMessage(raw, original.threadId);
+  console.log(`Sent reply ${data.id} in thread ${data.threadId}`);
 }
 
 function parseOptions(args) {
@@ -574,6 +624,7 @@ Usage:
   node tools/gmail/cli.js attachments <messageId>
   node tools/gmail/cli.js download-attachments <messageId> [--out downloads/gmail]
   node tools/gmail/cli.js send --to you@example.com --subject "Subject" --body "Message" [--attach file ...]
+  node tools/gmail/cli.js reply <messageId> --body "Message" [--to address] [--attach file ...]
 
 Examples:
   node tools/gmail/cli.js auth
@@ -584,6 +635,7 @@ Examples:
   node tools/gmail/cli.js download-attachments 18c123abc --out downloads/gmail
   node tools/gmail/cli.js send --to you@example.com --subject "Hello" --body "Test message"
   node tools/gmail/cli.js send --to you@example.com --subject "Files" --body "Attached." --attach /tmp/file.pdf
+  node tools/gmail/cli.js reply 18c123abc --body "Thanks for the update."
 `);
 }
 
@@ -601,6 +653,7 @@ async function main() {
   if (command === "attachments") return attachments(args);
   if (command === "download-attachments") return downloadAttachments(args);
   if (command === "send") return send(args);
+  if (command === "reply") return reply(args);
   throw new Error(`Unknown command: ${command}`);
 }
 
