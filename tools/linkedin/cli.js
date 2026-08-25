@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
+const readline = require("readline");
 const { spawn } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "../..");
@@ -363,6 +364,19 @@ function httpUrl(value, optionName) {
 function publicationAccount() {
   const token = readToken();
   return token.account_name || token.account_email || token.account_id || "authenticated member";
+}
+
+function prompt(question) {
+  const input = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) => {
+    input.question(question, (answer) => {
+      input.close();
+      resolve(answer.trim());
+    });
+  });
 }
 
 async function confirmPublication(details) {
