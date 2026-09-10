@@ -1,0 +1,21 @@
+# Project-scoped MCP configuration. The reusable launcher reads only referenced
+# variables from the ignored root .env file at MCP startup; no key is stored here.
+
+[mcp_servers.rapidapi_devops_doctor]
+command = "node"
+args = [
+  "scripts/mcp-env-launcher.js",
+  "npx",
+  "-y",
+  "mcp-remote",
+  "https://mcp.rapidapi.com",
+  "--header",
+  "x-api-host: devops-doctor.p.rapidapi.com",
+  "--header",
+  "x-api-key: ${RAPIDAPI_KEY}",
+]
+env_vars = ["RAPIDAPI_KEY"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+required = false
+default_tools_approval_mode = "prompt"

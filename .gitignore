@@ -22,8 +22,5 @@ npm-debug.log*
 .agents/cache/
 .agents/logs/
 .agents/state/
-.codex/*
-!.codex/agents/
-!.codex/agents/*.toml
 docs/references/the-art-of-unix-programming.pdf
 .claude/settings.local.json
