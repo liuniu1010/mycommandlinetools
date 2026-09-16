@@ -608,6 +608,21 @@ async function runAction(page, command, options) {
   const timeout = numberOption(options.timeout, DEFAULT_TIMEOUT);
   page.setDefaultTimeout(timeout);
   const target = await targetFromOptions(page, options);
+  if (command === "download") {
+    const url = options.url || options._[0];
+    if (!url || url === true) usageError("Usage: node tools/playwright/cli.js download <url> --out <file> [--session default]");
+    const out = normalizeOutFile(options.out);
+    const response = await page.context().request.get(url, { timeout });
+    if (!response.ok()) {
+      throw new Error(`Download failed (${response.status()}): ${response.statusText()}`);
+    }
+    const content = await response.body();
+    if (!content.length) throw new Error("Download returned an empty file.");
+    fs.writeFileSync(out, content);
+    const disposition = response.headers()["content-disposition"] || "";
+    const filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^;\"]+)/i);
+    return { download: out, suggestedFilename: filename ? decodeURIComponent(filename[1]) : null, ok: true };
+  }
   if (command === "goto") {
     const url = options.url || options._[0];
     if (!url) usageError("Usage: node tools/playwright/cli.js goto <url> [--session default]");
@@ -710,6 +725,7 @@ async function runOneShot(command, options) {
       "uncheck",
       "wait",
       "goto",
+      "download",
       "snapshot",
       "scroll",
       "click-index",
@@ -968,6 +984,7 @@ Usage:
   node tools/playwright/cli.js session status [--name default]
   node tools/playwright/cli.js session stop [--name default] [--force]
   node tools/playwright/cli.js goto <url> [--session default]
+  node tools/playwright/cli.js download <url> --out <file> [--session default]
   node tools/playwright/cli.js click [locator options] [--session default]
   node tools/playwright/cli.js fill [locator options] --value <text> [--session default]
   node tools/playwright/cli.js press <key> [--session default]
@@ -1190,6 +1207,7 @@ async function main() {
   }
   const pageCommands = new Set([
     "goto",
+    "download",
     "click",
     "fill",
     "press",
