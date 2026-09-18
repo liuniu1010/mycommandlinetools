@@ -415,15 +415,21 @@ function mimeTypeForFile(file) {
   return types[ext] || "application/octet-stream";
 }
 
-function encodeHeader(value) {
+function sanitizeHeader(value) {
   return String(value || "").replace(/\r?\n/g, " ").trim();
+}
+
+function encodeUnstructuredHeader(value) {
+  const cleaned = sanitizeHeader(value);
+  if (/^[\x20-\x7E]*$/.test(cleaned)) return cleaned;
+  return `=?UTF-8?B?${Buffer.from(cleaned, "utf8").toString("base64")}?=`;
 }
 
 function buildMessage({ to, subject, body, attachments: files, headers = [] }) {
   const messageHeaders = [
-    `To: ${encodeHeader(to)}`,
-    `Subject: ${encodeHeader(subject)}`,
-    ...headers.map(([name, value]) => `${name}: ${encodeHeader(value)}`),
+    `To: ${sanitizeHeader(to)}`,
+    `Subject: ${encodeUnstructuredHeader(subject)}`,
+    ...headers.map(([name, value]) => `${name}: ${sanitizeHeader(value)}`),
   ];
 
   if (files.length === 0) {
@@ -457,9 +463,9 @@ function buildMessage({ to, subject, body, attachments: files, headers = [] }) {
     const filename = path.basename(fullPath);
     lines.push(
       `--${boundary}`,
-      `Content-Type: ${mimeTypeForFile(fullPath)}; name="${encodeHeader(filename)}"`,
+      `Content-Type: ${mimeTypeForFile(fullPath)}; name="${sanitizeHeader(filename)}"`,
       "Content-Transfer-Encoding: base64",
-      `Content-Disposition: attachment; filename="${encodeHeader(filename)}"`,
+      `Content-Disposition: attachment; filename="${sanitizeHeader(filename)}"`,
       "",
       fs.readFileSync(fullPath).toString("base64")
     );
