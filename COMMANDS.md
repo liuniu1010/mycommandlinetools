@@ -848,6 +848,9 @@ Tool notes:
   with `--executable-path`.
 - Supports persistent browser sessions so simple commands can combine into a
   larger browser workflow.
+- Supports attaching to a Chrome you started yourself with
+  `session start --cdp-url http://127.0.0.1:9222`, so manual login can be
+  handed over to the CLI.
 - Supports one-shot read commands with `--url` for text, HTML, links, locator
   checks, screenshots, key-line reads, form inspection, control listing, and
   page-state checks.
@@ -875,6 +878,19 @@ Start a visible session:
 node tools/playwright/cli.js session start --name work --headless false
 node tools/playwright/cli.js session start --name work --headless false --executable-path /usr/bin/google-chrome
 ```
+
+Attach to a Chrome that is already running, after logging in by hand:
+
+```bash
+google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp" &
+node tools/playwright/cli.js session start --name mine --cdp-url http://127.0.0.1:9222
+node tools/playwright/cli.js tabs --session mine
+node tools/playwright/cli.js tab use --index 1 --session mine
+```
+
+`session stop` detaches without closing an attached browser. `--profile`,
+`--executable-path`, `--user-agent`, `--viewport`, and `--headless` are rejected
+with `--cdp-url` because the browser is already running.
 
 Navigate and act in the same session:
 

@@ -96,6 +96,46 @@ function profilePath(name) {
   return path.join(PROFILES_DIR, name);
 }
 
+function normalizeCdpUrl(value) {
+  if (!value || value === true) usageError("--cdp-url requires a value like http://127.0.0.1:9222");
+  let parsed;
+  try {
+    parsed = new URL(String(value));
+  } catch {
+    return usageError(`Invalid --cdp-url: ${value}`);
+  }
+  if (!["http:", "https:", "ws:", "wss:"].includes(parsed.protocol)) {
+    usageError(`--cdp-url must be http(s):// or ws(s)://, got: ${value}`);
+  }
+  return parsed.toString().replace(/\/$/, "");
+}
+
+async function probeCdpEndpoint(url) {
+  if (!/^https?:/.test(url)) return;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  let error = null;
+  try {
+    const response = await fetch(`${url}/json/version`, { signal: controller.signal });
+    if (!response.ok) error = `HTTP ${response.status}`;
+  } catch (err) {
+    error = err.name === "AbortError" ? "timed out" : err.message;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (error) {
+    fail(
+      [
+        `No Chrome DevTools endpoint at ${url} (${error}).`,
+        "Start Chrome with remote debugging first, for example:",
+        '  google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp" &',
+        "Chrome refuses the debugging port on your everyday profile, so keep --user-data-dir separate.",
+      ].join("\n"),
+      EXIT_SESSION
+    );
+  }
+}
+
 function loadPlaywright() {
   try {
     return require("playwright");
@@ -197,7 +237,8 @@ function writeOutput(data, options) {
     if (data.title) console.log(`Title: ${data.title}`);
     if (data.pid) console.log(`PID: ${data.pid}`);
     if (data.port) console.log(`Port: ${data.port}`);
-    if (data.headless != null) console.log(`Headless: ${data.headless}`);
+    if (data.cdp_url) console.log(`Attached: ${data.cdp_url}`);
+    else if (data.headless != null) console.log(`Headless: ${data.headless}`);
     return;
   }
   if (data.tabs) {
@@ -866,6 +907,20 @@ async function startSession(args) {
   if (readSession(name)) {
     fail(`Session "${name}" already exists. Run session status or session stop first.`, EXIT_SESSION);
   }
+  const cdpUrl = options["cdp-url"] != null ? normalizeCdpUrl(options["cdp-url"]) : null;
+  if (cdpUrl) {
+    const unsupported = ["profile", "executable-path", "user-agent", "viewport", "headless"].filter(
+      (flag) => options[flag] != null
+    );
+    if (unsupported.length) {
+      usageError(
+        `--cdp-url attaches to a browser you already started, so ${unsupported
+          .map((flag) => `--${flag}`)
+          .join(", ")} cannot apply. Set those when launching Chrome instead.`
+      );
+    }
+    await probeCdpEndpoint(cdpUrl);
+  }
   ensureDir(SESSIONS_DIR);
   ensureDir(PROFILES_DIR);
   const port = await getFreePort();
@@ -884,6 +939,7 @@ async function startSession(args) {
     "--timeout",
     String(numberOption(options.timeout, DEFAULT_TIMEOUT)),
   ];
+  if (cdpUrl) serverArgs.push("--cdp-url", cdpUrl);
   if (options.viewport && options.viewport !== true) serverArgs.push("--viewport", options.viewport);
   if (options.profile && options.profile !== true) serverArgs.push("--profile", options.profile);
   if (options["user-agent"] && options["user-agent"] !== true) serverArgs.push("--user-agent", options["user-agent"]);
@@ -914,9 +970,13 @@ async function stopSession(args) {
     console.log(`Removed session metadata for "${name}".`);
     return;
   }
-  await requestSession(name, { command: "stop", options: {} });
+  const result = await requestSession(name, { command: "stop", options: {} });
   fs.rmSync(file, { force: true });
-  console.log(`Stopped session "${name}".`);
+  console.log(
+    result && result.detached
+      ? `Detached session "${name}". The browser it was attached to is still running.`
+      : `Stopped session "${name}".`
+  );
 }
 
 async function sessionStatus(args) {
@@ -981,6 +1041,7 @@ function help() {
   console.log(`
 Usage:
   node tools/playwright/cli.js session start [--name default] [--headless false]
+  node tools/playwright/cli.js session start --cdp-url http://127.0.0.1:9222 [--name default]
   node tools/playwright/cli.js session status [--name default]
   node tools/playwright/cli.js session stop [--name default] [--force]
   node tools/playwright/cli.js goto <url> [--session default]
@@ -1025,6 +1086,10 @@ Locator options:
 Examples:
   node tools/playwright/cli.js session start --name work --headless false
   node tools/playwright/cli.js session start --name work --headless false --executable-path /usr/bin/google-chrome
+  google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp" &
+  node tools/playwright/cli.js session start --name mine --cdp-url http://127.0.0.1:9222
+  node tools/playwright/cli.js tabs --session mine
+  node tools/playwright/cli.js tab use --index 1 --session mine
   node tools/playwright/cli.js goto https://example.com --session work
   node tools/playwright/cli.js text --selector main --session work
   node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
@@ -1044,7 +1109,8 @@ async function runSessionServer(args) {
   const { chromium } = loadPlaywright();
   ensureDir(SESSIONS_DIR);
   ensureDir(PROFILES_DIR);
-  const headless = boolOption(options.headless, false);
+  const cdpUrl = options["cdp-url"] && options["cdp-url"] !== true ? options["cdp-url"] : null;
+  const headless = cdpUrl ? false : boolOption(options.headless, false);
   const contextOptions = { headless };
   const viewport = parseViewport(options.viewport);
   if (viewport) contextOptions.viewport = viewport;
@@ -1052,18 +1118,31 @@ async function runSessionServer(args) {
   if (options["executable-path"] && options["executable-path"] !== true) {
     contextOptions["executable-path"] = options["executable-path"];
   }
-  const profile = options.profile && options.profile !== true ? options.profile : name;
-  const profileDir = profilePath(profile);
-  ensureDir(profileDir);
+  const profile = cdpUrl ? null : options.profile && options.profile !== true ? options.profile : name;
   let context;
   let page;
   try {
-    context = await chromium.launchPersistentContext(profileDir, chromiumLaunchOptions(contextOptions));
+    if (cdpUrl) {
+      const browser = await chromium.connectOverCDP(cdpUrl);
+      context = browser.contexts()[0] || (await browser.newContext());
+      browser.on("disconnected", () => {
+        fs.rmSync(sessionPath(name), { force: true });
+        process.exit(0);
+      });
+    } else {
+      const profileDir = profilePath(profile);
+      ensureDir(profileDir);
+      context = await chromium.launchPersistentContext(profileDir, chromiumLaunchOptions(contextOptions));
+    }
     page = context.pages()[0] || (await context.newPage());
     context.on("page", (newPage) => {
       page = newPage;
     });
   } catch (err) {
+    if (cdpUrl) {
+      console.error(`Could not attach to ${cdpUrl}: ${err.message}`);
+      process.exit(EXIT_SESSION);
+    }
     if (isBrowserMissing(err)) {
       console.error("Playwright browser binaries are missing. Run: npx playwright install chromium");
       process.exit(EXIT_DEPENDENCY);
@@ -1077,6 +1156,7 @@ async function runSessionServer(args) {
     token,
     headless,
     profile,
+    cdp_url: cdpUrl,
     executable_path: options["executable-path"] && options["executable-path"] !== true ? options["executable-path"] : null,
     started_at: new Date().toISOString(),
   };
@@ -1110,6 +1190,7 @@ async function runSessionServer(args) {
               pid: process.pid,
               port,
               headless,
+              cdp_url: cdpUrl,
               url: page.url(),
               title: await page.title(),
               last_activity: new Date().toISOString(),
@@ -1147,9 +1228,10 @@ async function runSessionServer(args) {
         }
         if (payload.command === "stop") {
           res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ ok: true }));
+          res.end(JSON.stringify({ ok: true, detached: Boolean(cdpUrl) }));
           server.close(async () => {
-            await context.close();
+            // An attached browser belongs to the user: drop the connection, never close it.
+            if (!cdpUrl) await context.close();
             fs.rmSync(sessionPath(name), { force: true });
             process.exit(0);
           });

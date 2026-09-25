@@ -49,7 +49,9 @@ For read-only requests, reasonable defaults are allowed:
   `inspect-form --url`, `page-state --url`, or `screenshot --url`.
 - Multi-step browser work should use a named Playwright session. Prefer headed
   sessions when the user needs to log in, solve MFA/CAPTCHA, use a password
-  manager, or manually inspect the browser.
+  manager, or manually inspect the browser. For a login-capable browser,
+  attach to a Chrome launched by the user or assistant over CDP rather than
+  letting Playwright launch it; see “Playwright login-capable sessions” below.
 - Prefer reusable Playwright CLI commands over ad-hoc `node -e` scripts for
   common browser tasks. Use `node -e` only for unusual one-off inspection or
   debugging that the CLI cannot express cleanly.
@@ -158,6 +160,7 @@ Playwright browser automation:
 ```bash
 node tools/playwright/cli.js session start --name work --headless false
 node tools/playwright/cli.js session start --name work --headless false --executable-path /usr/bin/google-chrome
+node tools/playwright/cli.js session start --name work --cdp-url http://127.0.0.1:9222
 node tools/playwright/cli.js goto https://example.com --session work
 node tools/playwright/cli.js tabs --session work
 node tools/playwright/cli.js tab use --index 1 --session work
@@ -180,7 +183,40 @@ node tools/playwright/cli.js read-keylines --url https://example.com --pattern "
 node tools/playwright/cli.js screenshot --url https://example.com --out downloads/playwright/example.png
 ```
 
-Playwright `snapshot` masks raw input values by design. `inspect-form` also avoids password, hidden, and file values, but still summarize browser output carefully and avoid repeating secrets. For login pages, prefer a headed persistent session and let the user type credentials directly into the browser; do not ask the user to send passwords through chat.
+### Playwright login-capable sessions
+
+When the user asks to open Chrome, start a browser, or open a site for browser
+work that may require login, use a user-launched Chrome attached over CDP. A
+browser launched by Playwright can be identified as automated by sign-in
+providers, while attaching after Chrome starts preserves the user's normal
+browser characteristics. The user performs every login; never request or type
+credentials and never automate an OAuth consent screen.
+
+First probe the usual local debugging endpoint. If it is unavailable, confirm a
+desktop display is available (inspect `/tmp/.X11-unix`; this machine normally
+uses `:10`) before launching a visible Chrome window. Reuse an existing CDP
+browser when possible; otherwise use a separate, persistent profile and attach:
+
+```bash
+curl -s -m 3 http://127.0.0.1:9222/json/version
+DISPLAY=:10.0 nohup google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp" "<url-or-about:blank>" > /dev/null 2>&1 &
+node tools/playwright/cli.js session start --name work --cdp-url http://127.0.0.1:9222
+```
+
+- Never delete `~/.chrome-cdp` or replace it with a fresh profile without the
+  user's approval. It holds the user's persistent logins and must remain
+  separate from `~/.config/google-chrome`.
+- If port 9222 is occupied by an unrelated process, choose another port and use
+  that same port in `--cdp-url`. Never use `--headless` for this login-capable
+  Chrome window.
+- If an authentication challenge occurs during automation, stop the session so
+  it detaches, let the user complete the challenge, then attach again. For a
+  CDP session, `session stop` detaches only: it leaves Chrome and its tabs open.
+  Describe that result as “detached,” not “closed.”
+- Fall back to a Playwright-launched session only when no login is involved or a
+  visible desktop display is unavailable.
+
+Playwright `snapshot` masks raw input values by design. `inspect-form` also avoids password, hidden, and file values, but still summarize browser output carefully and avoid repeating secrets.
 
 ## Side-Effect Commands
 

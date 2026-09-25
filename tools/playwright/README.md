@@ -51,6 +51,49 @@ node tools/playwright/cli.js session stop --name work
 
 If `--session` is omitted, commands use the `default` session.
 
+## Attaching To A Browser You Opened Yourself
+
+`--cdp-url` attaches a session to a Chrome that is already running, so you can
+log in, clear a captcha, or set up state by hand and then hand the same window
+over to the CLI. Start Chrome with remote debugging first:
+
+```bash
+google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-cdp" &
+```
+
+Chrome refuses the debugging port on an already-running everyday profile, so
+keep `--user-data-dir` separate. (Chrome >=136 refuses it on the default
+profile dir outright, and a Chrome started from the desktop icon has no
+debugging port at all, so it can never be attached.) Log in manually in that
+window, then attach:
+
+```bash
+node tools/playwright/cli.js session start --name mine --cdp-url http://127.0.0.1:9222
+node tools/playwright/cli.js tabs --session mine
+node tools/playwright/cli.js tab use --index 1 --session mine
+node tools/playwright/cli.js text --selector main --session mine
+```
+
+Tabs you open by hand after attaching show up in `tabs` as well, and the newest
+one becomes the active page.
+
+If you drive this tool through Claude Code or Codex CLI, just ask the assistant
+to open Chrome — `.claude/commands/playwright.md` and `AGENTS.md` tell it to use
+the flags above and attach, so the browser is always ready for a manual login.
+
+This is the way to reach sites behind a Google login. A browser launched *by*
+Playwright is stamped `--enable-automation` and reports
+`navigator.webdriver === true`, which Google's sign-in refuses; a browser you
+launched yourself reports neither, so you can sign in by hand and hand the
+window over. Keep `~/.chrome-cdp` — it stores those logins, so the sign-in is a
+one-time cost rather than a per-run one.
+
+Because the browser belongs to you, `session stop` only drops the connection and
+leaves Chrome running. Quitting Chrome yourself also ends the session. Options
+that only apply at launch — `--profile`, `--executable-path`, `--user-agent`,
+`--viewport`, `--headless` — are rejected with `--cdp-url`; set them on the
+Chrome command line instead.
+
 List tabs and switch the active tab:
 
 ```bash
@@ -187,6 +230,10 @@ node tools/playwright/cli.js flow downloads/example-flow.json
 ## Safety Notes
 
 - Browser profiles are stored under `tools/playwright/.profiles/`.
+- Sessions attached with `--cdp-url` use no profile directory; they borrow the
+  running browser's own profile.
+- Anyone who can reach the Chrome debugging port controls that browser, so bind
+  it to localhost and close it when finished.
 - Session metadata is stored under `tools/playwright/.sessions/`.
 - Do not commit browser profiles, sessions, screenshots, videos, or traces.
 - The session server listens only on `127.0.0.1` and uses a per-session token.

@@ -1,5 +1,53 @@
 You are automating a Chromium browser via the CLI at `tools/playwright/cli.js`. Run all commands from the repository root. Playwright must be installed (`npm install`) and Chromium binaries present (`npx playwright install chromium`).
 
+## Opening Chrome for the user — ALWAYS use these flags
+
+When the user asks you to "open Chrome", "start a browser", or "open <site>" for browser
+work, do **not** let Playwright launch the browser. Launch system Chrome yourself with the
+handover flags, then attach:
+
+```
+# 1. Reuse the browser if it is already up
+curl -s -m 3 http://127.0.0.1:9222/json/version
+
+# 2. Otherwise launch it (on the user's desktop display)
+DISPLAY=:10.0 nohup google-chrome \
+  --remote-debugging-port=9222 \
+  --user-data-dir="$HOME/.chrome-cdp" \
+  "<url or about:blank>" > /dev/null 2>&1 &
+
+# 3. Wait for the endpoint, then attach
+node tools/playwright/cli.js session start --name work --cdp-url http://127.0.0.1:9222
+```
+
+Why, briefly: a Playwright-*launched* browser is stamped `--enable-automation` with
+`navigator.webdriver === true`, and Google's sign-in refuses it. A Chrome launched this way
+is stamped nothing, so the user can log in by hand and hand the window over.
+
+Rules:
+
+- `$HOME/.chrome-cdp` holds the user's logins. Never delete it, and never swap in a fresh
+  profile dir without asking.
+- It must stay separate from `~/.config/google-chrome`: Chrome >=136 refuses remote
+  debugging on the default profile, and a Chrome the user started from the desktop icon has
+  no debugging port and can never be attached.
+- Confirm the display before launching (`ls /tmp/.X11-unix`; it is `:10` on this machine).
+  Without a display the window cannot be seen, so the user cannot log in.
+- If port 9222 is taken by something else, pick another and pass the same port to
+  `--cdp-url`.
+- Never `--headless` for a browser the user has to log in to.
+- Let the user perform every login themselves. Never type credentials and never try to
+  automate an OAuth consent screen. If a flow is challenged mid-run, `session stop` (which
+  only detaches), let the user click, then attach again.
+- `session stop` on an attached browser leaves it running; say so rather than implying the
+  browser was closed.
+- Flags that only apply at launch (`--profile`, `--executable-path`, `--user-agent`,
+  `--viewport`, `--headless`) are rejected together with `--cdp-url`; set them on the Chrome
+  command line instead.
+
+Only fall back to a Playwright-launched session (below) when no login is involved, or when
+there is no display available.
+
 ## Sessions
 
 Most commands require a running session. Start one first:
