@@ -93,11 +93,21 @@ node tools/freelancer/cli.js messages [--limit 10]
 ```
 Lists your message threads with context (project), message count, and last message preview.
 
+## Send a message
+```
+node tools/freelancer/cli.js send-message --thread <threadId> --message "text"          # preview
+node tools/freelancer/cli.js send-message --thread <threadId> --message "text" --yes    # send
+node tools/freelancer/cli.js send-message --to <userId> --project <projectId> --message "text" --yes
+```
+`send-message` replies in an existing thread (`--thread`, IDs come from `messages` or `notifications`) or starts a new thread with a known user (`--to <userId>`, optionally tied to `--project`). It only prints a preview unless `--yes` is passed. The API hides project owners, so a project's client cannot be looked up by project ID; Freelancer may also refuse to let a freelancer open a new chat with a client who hasn't contacted them first.
+**Always show the user the exact message and get approval before running with `--yes`.**
+
 ## Notifications
 ```
 node tools/freelancer/cli.js notifications [--limit 10]
 node tools/freelancer/cli.js notifications --unread-only
 ```
+Freelancer's API has no notifications endpoint, so this summarises message threads (read/unread, sender, last message) and your recent bids (award/shortlist/retracted status, project still active, total bid count). Bids with a change are flagged `UPDATE`. `--unread-only` keeps unread threads and flagged bids, filtered from the `--limit` most recent items (raise `--limit` for older unread threads). Bids on closed projects stay flagged. Senders are shown by username; reply with `send-message --thread <id>`. Use it to check for feedback after bidding.
 
 ## Milestones
 ```
@@ -109,5 +119,5 @@ Lists milestones for an active project with status and amounts.
 - API errors are returned as `{status: "error", ...}` in the response body (not HTTP errors)
 - When the user asks to search without keywords, prompt them for a search term first
 - `--client-credentials` is only available if the Freelancer app has it enabled
-- `bid`, `messages`, `notifications`, `bids` require user OAuth for full personal data access
+- `bid`, `messages`, `send-message`, `notifications`, `bids` require user OAuth for full personal data access
 - Always confirm with user before submitting a bid

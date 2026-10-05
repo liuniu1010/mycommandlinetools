@@ -441,8 +441,8 @@ Tool notes:
 - Uses the root `.env` file.
 - Saves OAuth tokens locally to `tools/freelancer/.token.json`, including account metadata when available.
 - Supports read-only project search/detail, profile and user lookup, profile skill reads, portfolio reads, reviews, bid reads, contests, services, Service purchase checks, messages, project messages, milestone payment reads, and milestone request reads.
-- Implements notifications, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable.
-- Supports bid submission/retraction, profile skill updates, and milestone payment request submission as side-effecting commands; confirm the bid, profile skill, or milestone details before using them.
+- `notifications` summarises unread message threads and status changes on your recent bids, built from the messages and bids APIs (Freelancer has no notifications endpoint).
+- Supports bid submission/retraction, profile skill updates, milestone payment request submission, and `send-message` as side-effecting commands; confirm the bid, profile skill, milestone, or message details before using them. `send-message` only previews unless `--yes` is passed.
 - Uses the non-standard `Freelancer-OAuth-V1` header internally. `auth --client-credentials` is available for app-only access, but user OAuth is required for bidding and most account-specific reads.
 
 Configure credentials:
@@ -542,6 +542,7 @@ node tools/freelancer/cli.js service-orders [--limit 100] [--offset 0] [--json]
 node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
 node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
 node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
+node tools/freelancer/cli.js send-message (--thread <threadId> | --to <userId> [--project <projectId>]) --message "text" [--yes]
 ```
 
 `services` lists current Freelancer Service Offerings for your account by default,

@@ -196,11 +196,22 @@ node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset
 
 `messages` lists message threads. Without `--project`, it lists all available threads, including support or private chat threads returned by Freelancer's API.
 
+### Send a message
+
+```bash
+node tools/freelancer/cli.js send-message --thread <threadId> --message "text" [--yes]
+node tools/freelancer/cli.js send-message --to <userId> [--project <projectId>] --message "text" [--yes]
+```
+
+`send-message` replies in an existing thread (`--thread`, IDs come from `messages` or `notifications`) or starts a new thread with a known user (`--to <userId>`, optionally tied to `--project`). It only prints a preview unless `--yes` is passed. The API hides project owners, so a project's client cannot be looked up by project ID; Freelancer may also refuse to let a freelancer open a new chat with a client who hasn't contacted them first.
+
 ### Notifications
 
 ```bash
 node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
 ```
+
+Freelancer's public API has no notifications endpoint, so `notifications` summarises your recent message threads (read/unread, sender, last message) and your recent bids (award, shortlist and retraction status, plus whether the project is still active). Bids with any of those changes are flagged `UPDATE`. `--unread-only` keeps only unread threads and flagged bids, filtered from the `--limit` most recent items, so raise `--limit` to reach older unread threads. Bids on closed projects stay flagged.
 
 ### Milestones
 
@@ -227,4 +238,5 @@ node tools/freelancer/cli.js request-milestone <projectId> --bid <bidId> --amoun
 - `services` uses Freelancer's public Service Offerings endpoint without an OAuth header; its default owner lookup uses the saved token's account ID
 - `service-orders` uses authenticated project reads and requires user OAuth; it does not scrape the Freelancer website
 - `portfolios`, `messages`, `milestone-requests`, `bids`, and `milestones` require user OAuth for full access
-- `notifications` is implemented, but Freelancer's notifications endpoint may return 404 depending on current API availability; use `messages` for supporter/client thread checks when notifications are unavailable
+- `notifications` combines the messages threads and bids APIs because Freelancer exposes no notifications endpoint; it requires user OAuth
+- `send-message` requires user OAuth and is a side-effecting account action; confirm the recipient and exact text before running it with `--yes`

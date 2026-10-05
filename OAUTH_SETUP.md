@@ -270,8 +270,8 @@ http://localhost:3000/callback
 
 5. Choose the minimum scopes needed. This CLI supports project search/detail,
    profile and user reads, profile skill management, portfolio and service
-   reads, reviews, bid reads/submission/retraction, contests, messages,
-   notifications, and milestones. `basic fln:user:email` is the default
+   reads, reviews, bid reads/submission/retraction, contests, messages
+   (read and send), notifications, and milestones. `basic fln:user:email` is the default
    repository example so account metadata can be saved when the API permits it.
    Bid submission and account-specific reads may require additional Freelancer
    scopes or advanced scopes in your app.

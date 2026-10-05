@@ -263,6 +263,39 @@ async function apiPost(pathname, body) {
   return parsed;
 }
 
+// The messages API expects form-encoded bodies; array values are sent as `key[]`.
+async function apiPostForm(pathname, fields) {
+  const config = requireConfig({ noSecret: true });
+  const accessToken = await getAccessToken();
+  const url = new URL(pathname, config.baseUrl);
+  const form = new URLSearchParams();
+  for (const [key, value] of Object.entries(fields)) {
+    if (value == null) continue;
+    if (Array.isArray(value)) value.forEach((item) => form.append(`${key}[]`, String(item)));
+    else form.append(key, String(value));
+  }
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Freelancer-OAuth-V1": accessToken,
+      "User-Agent": "personal-toolset freelancer-cli",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: form.toString(),
+  });
+  const text = await res.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = { raw: text };
+  }
+  if (!res.ok || parsed.status === "error") {
+    throw new Error(`API request failed (${res.status}): ${JSON.stringify(parsed, null, 2)}`);
+  }
+  return parsed;
+}
+
 async function apiPut(pathname, body, params = {}) {
   const config = requireConfig({ noSecret: true });
   const accessToken = await getAccessToken();
@@ -1022,19 +1055,121 @@ async function projectMessages(args) {
   });
 }
 
-async function notifications(args) {
+// Project owners are redacted in the API, so a new thread needs an explicit
+// recipient user ID; replying to an existing thread only needs the thread ID.
+async function sendMessage(args) {
   const options = parseOptions(args);
-  const limit = Math.min(Number(options.limit || 10), 100);
-  const body = await apiGet("/api/notifications/0.1/notifications/", { limit, unread_only: options["unread-only"] === true });
-  const list = body.result?.notifications || body.result || [];
-  if (!list.length) {
-    console.log("No notifications found.");
+  const usage =
+    "Usage: node tools/freelancer/cli.js send-message (--thread <threadId> | --to <userId> [--project <projectId>]) --message \"text\" [--yes]";
+  const text = typeof options.message === "string" ? options.message.trim() : "";
+  const threadId = options.thread == null ? null : Number(options.thread);
+  const toUserId = options.to == null ? null : Number(options.to);
+  const projectId = options.project == null ? null : Number(options.project);
+  if (!text || (threadId == null) === (toUserId == null)) throw new Error(usage);
+  for (const [name, value] of [["--thread", threadId], ["--to", toUserId], ["--project", projectId]]) {
+    if (value != null && (!Number.isSafeInteger(value) || value <= 0)) {
+      throw new Error(`${name} must be a positive integer.\n${usage}`);
+    }
+  }
+  if (threadId != null && projectId != null) throw new Error(`--project only applies with --to.\n${usage}`);
+
+  const target = threadId != null
+    ? `thread ${threadId}`
+    : `user ${toUserId}${projectId != null ? ` (project ${projectId})` : ""}`;
+  console.log(`To: ${target}`);
+  console.log(`Message:\n${text}\n`);
+  if (options.yes !== true) {
+    console.log("Preview only. Re-run with --yes to send.");
     return;
   }
-  console.log(`Showing ${list.length} notification(s).\n`);
-  list.forEach((n, i) => {
-    console.log(`${i + 1}. [${n.is_read ? "read" : "UNREAD"}] ${n.description || n.type || "(no description)"}`);
-    if (n.time_created) console.log(`   Time: ${new Date(Number(n.time_created) * 1000).toISOString()}`);
+
+  let body;
+  if (threadId != null) {
+    body = await apiPostForm(`/api/messages/0.1/threads/${threadId}/messages/`, { message: text });
+  } else {
+    const fields = { members: [toUserId], message: text };
+    if (projectId != null) {
+      fields.context_type = "project";
+      fields.context = projectId;
+    }
+    body = await apiPostForm("/api/messages/0.1/threads/", fields);
+  }
+  const result = body.result || {};
+  const sentThreadId = result.thread_id || result.thread?.id || result.id || threadId;
+  console.log(`Sent.${sentThreadId ? ` Thread ID: ${sentThreadId}` : ""}${result.id && result.thread_id ? `  Message ID: ${result.id}` : ""}`);
+}
+
+// Freelancer's public API has no notifications endpoint, so this summarises
+// the two feeds that matter after bidding: message threads and own bids.
+function bidHasUpdate(b, project) {
+  return Boolean(b.award_status || b.shortlisted || b.retracted || (project && project.status !== "active"));
+}
+
+function describeBidStatus(b, project) {
+  const parts = [];
+  if (b.award_status) parts.push(`award: ${b.award_status}`);
+  if (b.shortlisted) parts.push("shortlisted");
+  if (b.retracted) parts.push("retracted");
+  if (b.frontend_bid_status) parts.push(`bid: ${b.frontend_bid_status}`);
+  if (project?.status) parts.push(`project: ${project.status}`);
+  return parts.join(", ") || "pending";
+}
+
+async function notifications(args) {
+  const options = parseOptions(args);
+  const limit = Math.min(Math.max(Number(options.limit || 10), 1), 100);
+  const unreadOnly = options["unread-only"] === true;
+  const bidderId = readToken().account_id;
+  if (!bidderId) {
+    throw new Error("Could not determine bidder_id. Run `node tools/freelancer/cli.js profile` first.");
+  }
+
+  const threadBody = await apiGet("/api/messages/0.1/threads/", {
+    limit,
+    last_message: true,
+    user_details: true,
+    unread_thread_count: true,
+  });
+  const threadResult = threadBody.result || {};
+  const users = threadResult.users || {};
+  const threads = (threadResult.threads || []).filter((t) => !unreadOnly || t.is_read === false);
+
+  console.log(`Messages (${threadResult.unread_thread_count ?? "?"} unread thread(s) in total)\n`);
+  if (!threads.length) console.log(unreadOnly ? "No unread message threads.\n" : "No message threads.\n");
+  threads.forEach((t, i) => {
+    const last = t.thread?.message;
+    const context = t.thread?.context;
+    console.log(`${i + 1}. [${t.is_read === false ? "UNREAD" : "read"}] Thread ID: ${t.id}  Context: ${context ? `${context.type} ${context.id}` : "n/a"}`);
+    if (t.time_updated) console.log(`   Updated: ${new Date(Number(t.time_updated) * 1000).toISOString()}`);
+    if (last) {
+      console.log(`   From: ${formatMessageUser(last, users)}`);
+      if (last.message) console.log(`   Last: ${String(last.message).replace(/\s+/g, " ").trim().slice(0, 120)}`);
+    }
+    console.log("");
+  });
+
+  const bidBody = await apiGet("/api/projects/0.1/bids/", { bidders: [bidderId], limit });
+  const bidList = bidBody.result?.bids || [];
+  const projectIds = [...new Set(bidList.map((b) => b.project_id))];
+  const projectsById = {};
+  if (projectIds.length) {
+    const projectBody = await apiGet("/api/projects/0.1/projects/", { projects: projectIds, limit: projectIds.length });
+    (projectBody.result?.projects || []).forEach((p) => {
+      projectsById[p.id] = p;
+    });
+  }
+  const shownBids = bidList.filter((b) => !unreadOnly || bidHasUpdate(b, projectsById[b.project_id]));
+
+  console.log("Bids\n");
+  if (!shownBids.length) console.log(unreadOnly ? "No bid status changes.\n" : "No bids found.\n");
+  shownBids.forEach((b, i) => {
+    const project = projectsById[b.project_id];
+    const flag = bidHasUpdate(b, project) ? "UPDATE" : "no change";
+    console.log(`${i + 1}. [${flag}] ${project?.title || "(unknown project)"}`);
+    console.log(`   Project ID: ${b.project_id}  Bid ID: ${b.id}  Amount: ${b.amount}${b.period ? ` over ${b.period} days` : ""}`);
+    if (b.time_submitted) console.log(`   Submitted: ${new Date(Number(b.time_submitted) * 1000).toISOString()}`);
+    console.log(`   Status: ${describeBidStatus(b, project)}`);
+    if (project?.bid_stats?.bid_count != null) console.log(`   Total bids on project: ${project.bid_stats.bid_count}`);
     console.log("");
   });
 }
@@ -1180,6 +1315,7 @@ Usage:
   node tools/freelancer/cli.js portfolios [userId] [--limit 10] [--offset 0] [--json]
   node tools/freelancer/cli.js messages [--limit 10] [--project <projectId>]
   node tools/freelancer/cli.js project-messages <projectId> [--limit 10] [--offset 0]
+  node tools/freelancer/cli.js send-message (--thread <threadId> | --to <userId> [--project <projectId>]) --message "text" [--yes]
   node tools/freelancer/cli.js notifications [--limit 10] [--unread-only]
   node tools/freelancer/cli.js milestones <projectId>
   node tools/freelancer/cli.js milestone-requests --bid <bidId> [--limit 10] [--offset 0]
@@ -1204,6 +1340,7 @@ Examples:
   node tools/freelancer/cli.js portfolios
   node tools/freelancer/cli.js messages
   node tools/freelancer/cli.js project-messages 40458235
+  node tools/freelancer/cli.js send-message --thread 330747719 --message "Thanks, I'll take a look."
   node tools/freelancer/cli.js notifications --unread-only
   node tools/freelancer/cli.js milestones 40458235
   node tools/freelancer/cli.js milestone-requests --bid 487249873
@@ -1234,6 +1371,7 @@ async function main() {
   if (command === "portfolios") return portfolios(args);
   if (command === "messages") return messages(args);
   if (command === "project-messages") return projectMessages(args);
+  if (command === "send-message") return sendMessage(args);
   if (command === "notifications") return notifications(args);
   if (command === "milestones") return milestones(args);
   if (command === "milestone-requests") return milestoneRequests(args);
