@@ -11,7 +11,7 @@ This repository is a personal Node.js command-line toolset. Source code lives in
 - `tools/gdrive/` for Google Drive OAuth, file search, metadata reads, downloads, exports, uploads, file management, and browser open commands.
 - `tools/onedrive/` for OneDrive OAuth through Microsoft Graph, account reads, file search, metadata reads, downloads, uploads, file management, and browser open commands.
 - `tools/notion/` for Notion OAuth, page/database/block/comment/user reads, writes, resolution, and database summaries.
-- `tools/freelancer/` for Freelancer.com OAuth, project search, project lookup, user/profile/review reads, bid and milestone reads, bid submission/retraction, contests, messages, notifications, and browser open commands.
+- `tools/freelancer/` for Freelancer.com OAuth, project search and lookup, profile and profile-skill management, user/review/portfolio reads, bid and milestone reads and submission workflows, contests, Services and Service purchase checks, message threads, notifications, and browser open commands.
 - `tools/linguaslice/` for turning spoken MP3 recordings into sentence clips and a local interactive listening player.
 - `tools/linkedin/` for LinkedIn OAuth profile reads, confirmed member post publishing, LinkedIn Jobs search URL generation, and browser open commands. It must not scrape LinkedIn, automate a logged-in account, or call restricted Talent APIs.
 - `tools/playwright/` for Playwright-backed browser automation, including persistent Chromium/system-Chrome sessions, attaching to a user-launched Chrome over CDP with `session start --cdp-url`, one-shot page reads, screenshots, tab switching, iframe targeting, page/form inspection, custom control handling, form filling, submit-result checks, and JSON flow execution.

@@ -21,6 +21,7 @@ Run commands from the repository root. Use `COMMANDS.md` as the primary command 
 - Freelancer.com: `node tools/freelancer/cli.js ...`
 - LinkedIn Jobs: `node tools/linkedin/cli.js ...`
 - Playwright browser automation: `node tools/playwright/cli.js ...`
+- LinguaSlice sentence-player generation: `node tools/linguaslice/cli.js ...`
 
 Use the local CLIs instead of external app connectors when the user is clearly working in this repo or asks to use these command-line tools.
 
@@ -143,6 +144,20 @@ node tools/linkedin/cli.js post-link --text "Worth reading" --url "https://examp
 node tools/linkedin/cli.js post-image --text "Project screenshot" --file screenshot.png
 node tools/linkedin/cli.js search "ai agent" --location "Auckland, New Zealand"
 ```
+
+Audio listening player generation:
+
+```bash
+node tools/linguaslice/cli.js create lesson.mp3
+node tools/linguaslice/cli.js create lesson.mp3 --output downloads/lesson-player
+node tools/linguaslice/cli.js create lesson.mp3 --transcript-json transcription.json
+```
+
+LinguaSlice accepts MP3 input, writes an HTML player and sentence clips, and
+uses OpenAI transcription unless `--transcript-json` is supplied. Treat `create`
+as side-effecting: confirm the input file, output folder, whether `--force` will
+replace prior LinguaSlice-generated files, and whether an OpenAI transcription
+request is intended before running it.
 
 Freelancer Services use the public Service Offerings endpoint at
 `/api/service_offerings/0.1/service_offerings`, not the legacy Projects
@@ -291,6 +306,7 @@ Treat these as side-effecting and require explicit user permission before execut
 - `node tools/playwright/cli.js screenshot --out <file> ...`
 - Any command with `--open`, plus Google Drive, OneDrive, Upwork, and Freelancer `open`, and LinkedIn `developer`.
 - Attachment downloads, because they write files under `downloads/` or a user-specified path.
+- `node tools/linguaslice/cli.js create ...`, because it writes an output player and clips and may send audio to OpenAI for transcription.
 
 For every Google Drive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Permanent delete must be explicitly confirmed as permanent.
 For every OneDrive write command, ask for user permission first even when the user previously discussed the action. Permission must name the operation and target. Delete must be explicitly confirmed.
