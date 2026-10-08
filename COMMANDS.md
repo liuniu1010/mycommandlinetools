@@ -858,6 +858,8 @@ Tool notes:
 - Supports tabs with `tabs` and `tab use --index <n>`.
 - Supports iframe targeting with `--frame <iframe-css-selector>` and repeated
   element targeting with `--nth <index>`.
+- Narrows ambiguous locators with `--within <css>` (search inside a container)
+  and `--visible` (skip hidden duplicates, e.g. a Select2 dropdown's `<select>`).
 - Supports common form workflows with `inspect-form`, `controls`,
   `fill-textareas`, `select-combobox`, `click-index`, `scroll`, and
   `submit-check`.

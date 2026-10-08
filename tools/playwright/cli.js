@@ -278,14 +278,17 @@ function findLocatorOptions(options) {
 function locatorFromOptions(page, options) {
   const type = findLocatorOptions(options);
   if (!type) return null;
+  if (options.within === true) throw new Error("--within requires a CSS selector");
+  const scope = options.within ? page.locator(options.within) : page;
   let locator;
-  if (type === "role") locator = page.getByRole(options.role, { name: options.name });
-  else if (type === "label") locator = page.getByLabel(options.label);
-  else if (type === "placeholder") locator = page.getByPlaceholder(options.placeholder);
-  else if (type === "text") locator = page.getByText(options.text);
-  else if (type === "title") locator = page.getByTitle(options.title);
-  else if (type === "test-id") locator = page.getByTestId(options["test-id"]);
-  else locator = page.locator(options.selector);
+  if (type === "role") locator = scope.getByRole(options.role, { name: options.name });
+  else if (type === "label") locator = scope.getByLabel(options.label);
+  else if (type === "placeholder") locator = scope.getByPlaceholder(options.placeholder);
+  else if (type === "text") locator = scope.getByText(options.text);
+  else if (type === "title") locator = scope.getByTitle(options.title);
+  else if (type === "test-id") locator = scope.getByTestId(options["test-id"]);
+  else locator = scope.locator(options.selector);
+  if (options.visible) locator = locator.filter({ visible: true });
   if (options.nth != null && options.nth !== true) locator = locator.nth(integerOption(options.nth, "--nth"));
   return locator;
 }
@@ -1082,6 +1085,8 @@ Locator options:
   --test-id <id>
   --nth <index>
   --frame <iframe-css-selector>
+  --within <css>        resolve the locator inside this container
+  --visible             keep only visible matches (e.g. a custom dropdown over a hidden <select>)
 
 Examples:
   node tools/playwright/cli.js session start --name work --headless false
@@ -1093,6 +1098,8 @@ Examples:
   node tools/playwright/cli.js goto https://example.com --session work
   node tools/playwright/cli.js text --selector main --session work
   node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --session work
+  node tools/playwright/cli.js click --role option --name "TXT Record" --visible --session work
+  node tools/playwright/cli.js click --text "Save" --within "#settings" --session work
   node tools/playwright/cli.js screenshot --session work --out downloads/playwright/example.png
   node tools/playwright/cli.js text --url https://example.com --selector main
   node tools/playwright/cli.js read-keylines --session work --pattern "submitted|error|Connects"

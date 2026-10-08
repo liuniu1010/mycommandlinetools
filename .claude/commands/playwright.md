@@ -188,6 +188,11 @@ Use exactly one locator type per command:
 Modifiers (combine with any locator):
 - `--nth <index>` — zero-based index when multiple elements match
 - `--frame <css>` — target an iframe by CSS selector before resolving the locator
+- `--within <css>` — resolve the locator inside a container (same text elsewhere on the page)
+- `--visible` — keep only visible matches (custom dropdowns such as Select2 over a hidden `<select>`)
+
+A "strict mode violation ... resolved to N elements" error means the locator is ambiguous:
+narrow it with `--visible`, `--within` or `--nth`. Read the full error output, not just its last line.
 
 ## Flow files
 

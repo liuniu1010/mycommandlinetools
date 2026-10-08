@@ -132,6 +132,8 @@ Use one locator type per command:
 --test-id <id>
 --nth <index>
 --frame <iframe-css-selector>
+--within <css>
+--visible
 ```
 
 Examples:
@@ -145,6 +147,14 @@ node tools/playwright/cli.js click --selector ".card" --nth 0 --frame iframe --s
 
 `--nth` is zero-based and chooses one element from the resolved locator.
 `--frame` targets an iframe by CSS selector before resolving the locator.
+`--within` resolves the locator inside a container, for text that also appears
+elsewhere on the page.
+`--visible` keeps only visible matches. Custom dropdowns such as Select2 hide
+the real `<select>` and draw their own options, so the same option exists twice:
+
+```bash
+node tools/playwright/cli.js click --role option --name "TXT Record" --visible --session work
+```
 
 ## Page Inspection
 
